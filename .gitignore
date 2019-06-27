@@ -1,0 +1,7 @@
+
+.idea
+*.iml
+out
+gen
+cmake-build-debug/
+main.c
