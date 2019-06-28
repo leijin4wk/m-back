@@ -15,7 +15,7 @@
 /*---------------------------- Includes ------------------------------------*/
 #include <ctype.h>
 #include <stdarg.h>
-#include "iniparser.h"
+#include "ini_parser.h"
 
 /*---------------------------- Defines -------------------------------------*/
 #define ASCIILINESZ         (1024)

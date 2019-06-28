@@ -1,9 +1,14 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include "socket.h"
 #include "dbg.h"
 #include "epoll.h"
+#include "thread_pool.h"
+#include "http_handler.h"
 
+#define THREAD_NUM 8
 extern struct epoll_event *events;
 
 int main() {
@@ -20,12 +25,21 @@ int main() {
     printf("NOT USE_B\n");
 #endif
 
+    struct sockaddr_in client_addr;
+    // initialize clientaddr and inlen to solve "accept Invalid argument" bug
+    socklen_t in_len = 1;
+
     int listen_fd=create_and_bind(8888);
+
     check_exit(listen_fd<0,"socket 创建和绑定失败！");
 
     int flag = make_socket_non_blocking(listen_fd);
 
     check_exit(flag <0, "设置socket为非阻塞失败！");
+
+    m_thread_pool_t *tp = thread_pool_init(THREAD_NUM);
+
+    check(tp == NULL, "thread_pool_init error");
 
     int epoll_fd = m_epoll_create(0);
 
@@ -41,19 +55,34 @@ int main() {
     while (1) {
         int n = m_epoll_wait(epoll_fd, events, MAXEVENTS, -1);
         for (int i = 0; i < n; i++){
-
             if ((events[i].events & EPOLLERR) ||(events[i].events & EPOLLHUP) ||(!(events[i].events & EPOLLIN))){
                 fprintf (stderr, "epoll error\n");
                 close (events[i].data.fd);
                 continue;
             } else if (listen_fd == events[i].data.fd){
-
-
-                printf("我来了！\n");
+                while(1) {
+                    int socket_in_fd = accept(listen_fd, (struct sockaddr *)&client_addr, &in_len);
+                    if (socket_in_fd < 0) {
+                        if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
+                            break;
+                        } else {
+                            log_err("accept");
+                            break;
+                        }
+                    }
+                    int rc = make_socket_non_blocking(socket_in_fd);
+                    check(rc != 0, "make_socket_non_blocking");
+                    log_info("new connection fd %d", socket_in_fd);
+                    event.data.fd = socket_in_fd;
+                    event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
+                    m_epoll_add(epoll_fd, socket_in_fd, &event);
+                }
+                printf("accept complete\n");
             }else{
-                printf("哈哈哈！\n");
+                log_info("new data from fd %d", events[i].data.fd);
+                int rc = thread_pool_add(tp, do_request, events[i].data.fd);
+                check(rc == 0, "thread_pool_add");
             }
-
         }
     }
 

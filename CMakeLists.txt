@@ -22,4 +22,4 @@ endif (USE_B)
 # 并将名称保存到 DIR_SRCS 变量
 aux_source_directory(src/ DIR_SRCS)
 
-add_executable(m_back ${DIR_SRCS})
+add_executable(m_back ${DIR_SRCS} src/http_handler.h src/http_handler.c)

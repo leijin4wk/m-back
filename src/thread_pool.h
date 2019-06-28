@@ -7,8 +7,6 @@
 #include <stdint.h>
 #include "dbg.h"
 
-#define THREAD_NUM 8
-
 typedef struct m_task_s {
     void (*func)(void *);
     void *arg;

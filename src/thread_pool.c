@@ -1,5 +1,5 @@
 
-#include "threadpool.h"
+#include "thread_pool.h"
 
 typedef enum {
     immediate_shutdown = 1,
@@ -82,15 +82,13 @@ int thread_pool_add(m_thread_pool_t *pool, void (*func)(void *), void *arg) {
         err = m_tp_already_shutdown;
         goto out;
     }
-    
-    // TODO: use a memory pool
+
     m_task_t *task = (m_task_t *)malloc(sizeof(m_task_t));
     if (task == NULL) {
         log_err("malloc task fail");
         goto out;
     }
-    
-    // TODO: use a memory pool
+
     task->func = func;
     task->arg = arg;
     task->next = pool->head->next;
@@ -99,7 +97,7 @@ int thread_pool_add(m_thread_pool_t *pool, void (*func)(void *), void *arg) {
     pool->queue_size++;
     
     rc = pthread_cond_signal(&(pool->cond));
-    check(rc == 0, "pthread_cond_signal");
+    check(rc != 0, "pthread_cond_signal");
 
 out:
     if(pthread_mutex_unlock(&pool->lock) != 0) {
@@ -120,7 +118,6 @@ int thread_pool_free(m_thread_pool_t *pool) {
     }
 
     m_task_t *old;
-    /* pool->head is a dummy head */
     while (pool->head->next) {
         old = pool->head->next;
         pool->head->next = pool->head->next->next;
@@ -191,8 +188,7 @@ static void *thread_pool_worker(void *arg) {
 
     while (1) {
         pthread_mutex_lock(&(pool->lock));
-        
-        /*  Wait on condition variable, check for spurious wakeups. */
+
         while ((pool->queue_size == 0) && !(pool->shutdown)){
             pthread_cond_wait(&(pool->cond), &(pool->lock));
         }
@@ -215,13 +211,10 @@ static void *thread_pool_worker(void *arg) {
         pthread_mutex_unlock(&(pool->lock));
 
         (*(task->func))(task->arg);
-        /* TODO: memory pool */
         free(task);
     }
 
     pool->started--;
     pthread_mutex_unlock(&(pool->lock));
     pthread_exit(NULL);
-
-    return NULL;
 }
