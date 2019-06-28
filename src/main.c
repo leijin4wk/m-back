@@ -66,12 +66,12 @@ int main() {
                         if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
                             break;
                         } else {
-                            log_err("accept");
+                            log_err("accept fail！");
                             break;
                         }
                     }
                     int rc = make_socket_non_blocking(socket_in_fd);
-                    check(rc != 0, "make_socket_non_blocking");
+                    check(rc != 0, "accept make_socket_non_blocking fail!");
                     log_info("new connection fd %d", socket_in_fd);
                     event.data.fd = socket_in_fd;
                     event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
@@ -79,7 +79,10 @@ int main() {
                 }
             }else{
                 log_info("new data from fd %d", events[i].data.fd);
-                int rc = thread_pool_add(tp, handler_request, events[i].data.fd);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wint-conversion"
+                int rc = thread_pool_add(tp, handler_request, &events[i].data.fd);
+#pragma GCC diagnostic pop
                 check(rc != 0, "thread_pool_add");
             }
         }

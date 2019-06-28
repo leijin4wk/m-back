@@ -31,6 +31,4 @@
 
 #define check_exit(A, M, ...) if((A)) { log_err(M "\n", ##__VA_ARGS__); exit(1);}
 
-#define check_debug(A, M, ...) if((A)) { debug(M "\n", ##__VA_ARGS__); /* exit(1); */}
-
 #endif
