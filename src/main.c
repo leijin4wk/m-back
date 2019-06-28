@@ -20,12 +20,8 @@ int main() {
     printf("NOT USE_B\n");
 #endif
 
-    int socket_fd=create_and_bind(8888);
-    check_exit(socket_fd<0,"socket 创建和绑定失败！");
-
-    int listen_fd=socket_listen(socket_fd);
-
-    check_exit(listen_fd<0,"socket 监听失败！");
+    int listen_fd=create_and_bind(8888);
+    check_exit(listen_fd<0,"socket 创建和绑定失败！");
 
     int flag = make_socket_non_blocking(listen_fd);
 

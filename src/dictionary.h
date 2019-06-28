@@ -17,8 +17,8 @@
 */
 /*--------------------------------------------------------------------------*/
 
-#ifndef M_BACK_DICTIONARY_H
-#define M_BACK_DICTIONARY_H
+#ifndef DICTIONARY_H
+#define DICTIONARY_H
 
 /*---------------------------------------------------------------------------
                                 Includes

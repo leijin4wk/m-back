@@ -13,8 +13,8 @@
 */
 /*--------------------------------------------------------------------------*/
 
-#ifndef M_BACK_INIPARSER_H
-#define M_BACK_INIPARSER_H
+#ifndef INIPARSER_H
+#define INIPARSER_H
 
 /*---------------------------------------------------------------------------
                                 Includes
