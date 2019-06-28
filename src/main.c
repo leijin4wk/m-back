@@ -77,15 +77,12 @@ int main() {
                     event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
                     m_epoll_add(epoll_fd, socket_in_fd, &event);
                 }
-                printf("accept complete\n");
             }else{
                 log_info("new data from fd %d", events[i].data.fd);
                 int rc = thread_pool_add(tp, do_request, events[i].data.fd);
-                check(rc == 0, "thread_pool_add");
+                check(rc != 0, "thread_pool_add");
             }
         }
     }
-
-    printf("aaa\n");
     return 0;
 }
