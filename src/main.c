@@ -79,7 +79,7 @@ int main() {
                 }
             }else{
                 log_info("new data from fd %d", events[i].data.fd);
-                int rc = thread_pool_add(tp, do_request, events[i].data.fd);
+                int rc = thread_pool_add(tp, handler_request, events[i].data.fd);
                 check(rc != 0, "thread_pool_add");
             }
         }
