@@ -38,22 +38,24 @@ int main() {
 
     m_epoll_add(epoll_fd, listen_fd, &event);
 
-//    while (1) {
-//        int n = m_epoll_wait(epoll_fd, events, MAXEVENTS, -1);
-//        for (int i = 0; i < n; i++){
-//
-//            if ((events[i].events & EPOLLERR) ||(events[i].events & EPOLLHUP) ||(!(events[i].events & EPOLLIN))){
-//                fprintf (stderr, "epoll error\n");
-//                close (events[i].data.fd);
-//                continue;
-//            } else if (listen_fd == events[i].data.fd){
-//                printf("我来了！\n");
-//            }else{
-//                printf("哈哈哈！\n");
-//            }
-//
-//        }
-//    }
+    while (1) {
+        int n = m_epoll_wait(epoll_fd, events, MAXEVENTS, -1);
+        for (int i = 0; i < n; i++){
+
+            if ((events[i].events & EPOLLERR) ||(events[i].events & EPOLLHUP) ||(!(events[i].events & EPOLLIN))){
+                fprintf (stderr, "epoll error\n");
+                close (events[i].data.fd);
+                continue;
+            } else if (listen_fd == events[i].data.fd){
+
+
+                printf("我来了！\n");
+            }else{
+                printf("哈哈哈！\n");
+            }
+
+        }
+    }
 
     printf("aaa\n");
     return 0;

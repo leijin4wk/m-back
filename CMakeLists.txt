@@ -6,16 +6,14 @@ set(CMAKE_C_STANDARD 11)
 
 #条件编译
 option (USE_A  "Use A" ON)
-message("USE_A option is ${USE_A}")
 if (USE_A)
-    message("aaa")
+    message("add USE_A def")
     add_definitions(-DUSE_A)
 endif (USE_A)
 
 option (USE_B  "Use B"  OFF)
-message("USE_B option is ${USE_B}")
 if (USE_B)
-    message("bbb")
+    message("add USE_B def")
     add_definitions(-DUSE_B)
 endif (USE_B)
 
@@ -24,4 +22,4 @@ endif (USE_B)
 # 并将名称保存到 DIR_SRCS 变量
 aux_source_directory(src/ DIR_SRCS)
 
-add_executable(m_back ${DIR_SRCS} src/socket.h src/socket.c)
+add_executable(m_back ${DIR_SRCS})
