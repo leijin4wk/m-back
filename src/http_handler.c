@@ -4,7 +4,6 @@
 #include <sys/socket.h>
 #include "http_handler.h"
 #include "dbg.h"
-#include "http_parser.h"
 
 void handler_request(void *ptr) {
     int* fd=(int*)ptr;
@@ -17,4 +16,6 @@ void handler_request(void *ptr) {
         log_err("recv err!");
     }
     log_info("%s\n",buf);
+    log_info("size %d\n",recved);
+    log_info("aaaaa\n");
 }

@@ -5,18 +5,14 @@ set(CMAKE_C_STANDARD 11)
 
 
 #条件编译
-option (USE_A  "Use A" ON)
-if (USE_A)
-    message("add USE_A def")
-    add_definitions(-DUSE_A)
-endif (USE_A)
+option (KORE_DEBUG  "DEBUG" ON)
+if (KORE_DEBUG)
+    message("DEBUG OPEN")
+    add_definitions(-DKORE_DEBUG)
+endif ()
 
-option (USE_B  "Use B"  OFF)
-if (USE_B)
-    message("add USE_B def")
-    add_definitions(-DUSE_B)
-endif (USE_B)
 
+include_directories(/usr/include)
 ##
 # 查找目录下的所有源文件
 # 并将名称保存到 DIR_SRCS 变量

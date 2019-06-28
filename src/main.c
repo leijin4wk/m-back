@@ -12,19 +12,6 @@
 extern struct epoll_event *events;
 
 int main() {
-
-#ifdef USE_A
-    printf("USE_A\n");
-#else
-    printf("NOT USE_A\n");
-#endif
-
-#ifdef USE_B
-    printf("USE_B\n");
-#else
-    printf("NOT USE_B\n");
-#endif
-
     struct sockaddr_in client_addr;
     // initialize clientaddr and inlen to solve "accept Invalid argument" bug
     socklen_t in_len = 1;
