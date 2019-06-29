@@ -6,7 +6,10 @@
 #include "dbg.h"
 #include "epoll.h"
 #include "thread_pool.h"
-#include "http_handler.h"
+#include "http.h"
+
+#include <yajl/yajl_tree.h>
+#include <yajl/yajl_gen.h>
 
 #define THREAD_NUM 8
 extern struct epoll_event *events;
@@ -16,7 +19,7 @@ int main() {
     // initialize clientaddr and inlen to solve "accept Invalid argument" bug
     socklen_t in_len = 1;
 
-    int listen_fd=create_and_bind(8888);
+    int listen_fd=create_and_bind(80);
 
     check_exit(listen_fd<0,"socket 创建和绑定失败！");
 

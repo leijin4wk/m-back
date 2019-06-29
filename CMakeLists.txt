@@ -10,9 +10,6 @@ if (KORE_DEBUG)
     message("DEBUG OPEN")
     add_definitions(-DKORE_DEBUG)
 endif ()
-
-
-include_directories(/usr/include)
 ##
 # 查找目录下的所有源文件
 # 并将名称保存到 DIR_SRCS 变量
