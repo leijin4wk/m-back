@@ -2,10 +2,14 @@
 // Created by oyo on 2019-06-28.
 //
 #include <sys/socket.h>
+#include "http_parser.h"
 #include "http.h"
 #include "dbg.h"
 
 void handler_request(void *ptr) {
+
+    http_parser_settings settings;
+
     int* fd=(int*)ptr;
     log_info("handler request fd %d", *fd);
     size_t len = 80*1024;
