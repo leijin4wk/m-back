@@ -4,7 +4,6 @@
 #include <sys/socket.h>
 #include "http.h"
 #include "dbg.h"
-static int	http_body_recv(struct netbuf *);
 
 void handler_request(void *ptr) {
     int* fd=(int*)ptr;
@@ -19,8 +18,5 @@ void handler_request(void *ptr) {
     log_info("%s\n",buf);
     log_info("size %d\n",recved);
     log_info("aaaaa\n");
-}
-
-static int	http_body_recv(struct netbuf *nb){
-    return 0;
+    char* a="aa";
 }
