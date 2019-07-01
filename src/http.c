@@ -21,9 +21,49 @@
 //  http_cb      on_chunk_header;
 //  http_cb      on_chunk_complete;
 
-int my_on_url(http_parser* parser, const char *at, size_t length) {
-    log_info("my_on_url: %s\n",*at);
-    return 0;
+int on_message_begin(http_parser* parser) {
+   (void)parser;
+   printf("\n***MESSAGE BEGIN***\n\n");
+   return 0;
+}
+
+int on_headers_complete(http_parser* parser) {
+   (void)parser;
+   printf("\n***HEADERS COMPLETE***\n\n");
+   return 0;
+}
+
+int on_message_complete(http_parser* parser) {
+   (void)parser;
+   printf("\n***MESSAGE COMPLETE***\n\n");
+   return 0;
+}
+
+
+int on_url(http_parser* parser, const char* at, size_t length) {
+   (void)parser;
+   printf("Url: %.*s\n", (int)length, at);
+
+
+   return 0;
+}
+
+int on_header_field(http_parser* parser, const char* at, size_t length) {
+   (void)parser;
+   printf("Header field: %.*s\n", (int)length, at);
+   return 0;
+}
+
+int on_header_value(http_parser* parser, const char* at, size_t length) {
+   (void)parser;
+   printf("Header value: %.*s\n", (int)length, at);
+   return 0;
+}
+
+int on_body(http_parser* parser, const char* at, size_t length) {
+   (void)parser;
+   printf("Body: %.*s\n", (int)length, at);
+   return 0;
 }
 
 void handler_request(void *ptr) {
@@ -36,14 +76,19 @@ void handler_request(void *ptr) {
     if (recved < 0) {
         log_err("recv err!");
     }
-    http_parser_settings settings;
-    settings.on_url=my_on_url;
-    http_parser *parser = malloc(sizeof(http_parser));
-    http_parser_init(parser, HTTP_REQUEST);
-    int nparsed = http_parser_execute(parser, &settings, buf, recved);
-    log_info("%s\n",buf);
+    struct http_parser* parser = (http_parser*)malloc(sizeof(http_parser));
+    http_parser_init(parser, HTTP_REQUEST); // 初始化parser为Request类型
+    http_parser_settings parser_set;
+    parser_set.on_message_begin = on_message_begin;
+    parser_set.on_header_field = on_header_field;
+    parser_set.on_header_value = on_header_value;
+    parser_set.on_url = on_url;
+    parser_set.on_body = on_body;
+    parser_set.on_headers_complete = on_headers_complete;
+    parser_set.on_message_complete = on_message_complete;
+
+    http_parser_execute(parser, &parser_set, buf, strlen(buf));
     log_info("size %d\n",recved);
-    log_info("nparsed %d\n",nparsed);
     log_info("aaaaa\n");
     char* a="aa";
 }
