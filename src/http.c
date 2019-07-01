@@ -117,6 +117,7 @@ void handler_request(void *ptr) {
     if (recved < 0) {
         log_err("recv err!");
     }
+    log_info("size %d\n",recved);
     struct http_parser* parser = (http_parser*)malloc(sizeof(http_parser));
     http_parser_init(parser, HTTP_REQUEST); // 初始化parser为Request类型
     http_parser_settings parser_set;
@@ -128,7 +129,6 @@ void handler_request(void *ptr) {
     parser_set.on_headers_complete = on_headers_complete;
     parser_set.on_message_complete = on_message_complete;
     http_parser_execute(parser, &parser_set, buf, strlen(buf));
-    log_info("size %d\n",recved);
-    log_info("aaaaa\n");
-    char* a="aa";
+
+
 }

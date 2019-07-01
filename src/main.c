@@ -29,7 +29,7 @@ int main() {
 
     m_thread_pool_t *tp = thread_pool_init(THREAD_NUM);
 
-    check(tp == NULL, "thread_pool_init error");
+    check_exit(tp == NULL, "thread_pool_init error");
 
     int epoll_fd = m_epoll_create(0);
 
