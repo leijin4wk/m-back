@@ -1,13 +1,11 @@
 
-
 #ifndef cJSON__h
 #define cJSON__h
-
+//解决未引用的报错问题
+#  define INT_MIN	(-INT_MAX - 1)
+#  define INT_MAX	2147483647
 
 /* cJSON Types: */
-
-#include <stddef.h>
-
 #define cJSON_False 0
 #define cJSON_True 1
 #define cJSON_NULL 2

@@ -51,67 +51,62 @@ static void delete_http_header(struct http_header *header) {
 // 返回值为创建的新节点
 static struct http_header *add_http_header(struct http_request *request) {
     struct http_header *header = request->headers;
-    // 从头开始循环链表
     while (header != NULL) {
-        // 创建一个新的header添加到尾部
-        // 并直接返回
         if (header->next == NULL) {
             header->next = new_http_header();
             return header->next;
         }
         header = header->next;
     }
-    // 如果header是空，则创建一个空的header
-    // 并将它赋值给request-headers
     request->headers = new_http_header();
     return request->headers;
 }
 
 int on_message_begin(http_parser* parser) {
-   (void)parser;
     log_info("\n***MESSAGE BEGIN***\n\n");
-   return 0;
+    parser->data=new_http_request();
+    return 0;
 }
-
-int on_headers_complete(http_parser* parser) {
-   (void)parser;
-    log_info("\n***HEADERS COMPLETE***\n\n");
-   return 0;
-}
-
-int on_message_complete(http_parser* parser) {
-   (void)parser;
-    log_info("\n***MESSAGE COMPLETE***\n\n");
-   return 0;
-}
-
 
 int on_url(http_parser* parser, const char* at, size_t length) {
-   (void)parser;
     log_info("Url: %.*s\n", (int)length, at);
-
-
-   return 0;
+    struct http_request *request = (struct http_request *) parser->data;
+    request->method = (char *)http_method_str(parser->method);
+    request->http_major = parser->http_major;
+    request->http_minor = parser->http_minor;
+    alloc_cpy(request->url, at, length)
+    return 0;
 }
 
 int on_header_field(http_parser* parser, const char* at, size_t length) {
-   (void)parser;
-    log_info("Header field: %.*s\n", (int)length, at);
-   return 0;
+    struct http_request *request = (struct http_request *) parser->data;
+    struct http_header *header = add_http_header(request);
+    alloc_cpy(header->name, at, length)
+    return 0;
 }
 
 int on_header_value(http_parser* parser, const char* at, size_t length) {
-   (void)parser;
-    log_info("Header value: %.*s\n", (int)length, at);
+    struct http_request *request = (struct http_request *) parser->data;
+    struct http_header *header = request->headers;
+    while (header->next != NULL) {
+        header = header->next;
+    }
+    alloc_cpy(header->value, at, length)
    return 0;
 }
-
+int on_headers_complete(http_parser* parser) {
+    log_info("\n***HEADERS COMPLETE***\n\n");
+    return 0;
+}
 int on_body(http_parser* parser, const char* at, size_t length) {
-   (void)parser;
-    log_info("Body: %.*s\n", (int)length, at);
-   return 0;
+    struct http_request *request = (struct http_request *) parser->data;
+    alloc_cpy(request->body, at, length)
+    return 0;
 }
-
+int on_message_complete(http_parser* parser) {
+    log_info("\n***MESSAGE COMPLETE***\n\n");
+    return 0;
+}
 void handler_request(void *ptr) {
     int* fd=(int*)ptr;
     log_info("handler request fd %d", *fd);

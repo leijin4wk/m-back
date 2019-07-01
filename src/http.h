@@ -19,7 +19,10 @@ struct http_request {
     unsigned short http_major, http_minor;
     struct http_header *headers;
 };
-
+#define alloc_cpy(dest, src, len) \
+    dest = malloc(len + 1);\
+    memcpy(dest, src, len);\
+    dest[len] = '\0';
 void handler_request(void *ptr);
 
 #endif //M_BACK_HTTP_H

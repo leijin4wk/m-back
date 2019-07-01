@@ -1,4 +1,3 @@
-
 /* cJSON */
 /* JSON parser in C. */
 
@@ -9,7 +8,6 @@
 #include <float.h>
 #include <limits.h>
 #include <ctype.h>
-#include <stdint.h>
 #include "cJSON.h"
 
 static const char *ep;
@@ -134,7 +132,7 @@ static char *print_number(cJSON *item,printbuffer *p)
 		else	str=(char*)cJSON_malloc(2);	/* special case for 0. */
 		if (str) strcpy(str,"0");
 	}
-	else if (fabs(((double)item->valueint)-d)<=DBL_EPSILON && d<=INT32_MAX && d>=INT32_MIN)
+	else if (fabs(((double)item->valueint)-d)<=DBL_EPSILON && d<=INT_MAX && d>=INT_MIN)
 	{
 		if (p)	str=ensure(p,21);
 		else	str=(char*)cJSON_malloc(21);	/* 2^64+1 can be represented in 21 chars. */
