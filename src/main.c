@@ -2,24 +2,37 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/sysinfo.h>
 #include "socket.h"
 #include "dbg.h"
 #include "epoll.h"
 #include "thread_pool.h"
 #include "http.h"
-
-#include <yajl/yajl_tree.h>
-#include <yajl/yajl_gen.h>
+#include "ini_parser.h"
 
 #define THREAD_NUM 8
 extern struct epoll_event *events;
 
-int main() {
+
+
+#define CONFIG_FILE_PATH "../config.ini"
+
+int main(){
+    dictionary* ini=iniparser_load(CONFIG_FILE_PATH);
+    int num=iniparser_getnsec(ini);
+    log_info("%d",num);
+    for(int i=0;i<num;i++){
+        log_info("%s",iniparser_getsecname(ini,i));
+    }
+    const char *ip = iniparser_getstring(ini,"http:ip","null");
+    const char *port =iniparser_getstring(ini,"http:port","null");
+    printf("This system has %d processors\n",get_nprocs_conf());;
+
     struct sockaddr_in client_addr;
     // initialize clientaddr and inlen to solve "accept Invalid argument" bug
     socklen_t in_len = 1;
 
-    int listen_fd=create_and_bind(80);
+    int listen_fd=create_and_bind(443);
 
     check_exit(listen_fd<0,"socket 创建和绑定失败！");
 
