@@ -9,9 +9,10 @@ MESSAGE(STATUS "Current Operation System Name: ${CMAKE_SYSTEM_NAME}")
 
 MESSAGE(STATUS "Current Operation System Name: ${CMAKE_SYSTEM_PROCESSOR}")
 
-include_directories("/octlr/include")
+include_directories(/octlr/include)
 
-link_directories("/octlr/lib")
+link_directories(/octlr/lib)
+
 add_definitions(-D_GNU_SOURCE)
 #条件编译
 option (KORE_DEBUG  "DEBUG" ON)
