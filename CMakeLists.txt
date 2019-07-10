@@ -27,4 +27,4 @@ aux_source_directory(src/ DIR_SRCS)
 add_executable(m_back ${DIR_SRCS})
 #pthread  posix的线程库
 #m  math库
-target_link_libraries(m_back pthread m)
+target_link_libraries(m_back pthread m http_parser)
