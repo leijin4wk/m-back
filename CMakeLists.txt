@@ -11,10 +11,10 @@ MESSAGE(STATUS "Current Operation System Name: ${CMAKE_SYSTEM_PROCESSOR}")
 
 add_definitions(-D_GNU_SOURCE)
 #条件编译
-option (KORE_DEBUG  "DEBUG" ON)
-if (KORE_DEBUG)
+option (DEBUG  "DEBUG" ON)
+if (DEBUG)
     message("DEBUG OPEN")
-    add_definitions(-DKORE_DEBUG)
+    add_definitions(-DDEBUG)
 endif ()
 ##
 # 查找目录下的所有源文件

@@ -4,7 +4,9 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <zconf.h>
 #include "event.h"
+#include "socket.h"
 
 #define BUFFER_SIZE 1024
 int total_clients=0;
@@ -33,6 +35,10 @@ static void ev_accept_cb(struct ev_loop *loop,struct ev_io *watcher,int event)
     client_sd=accept(watcher->fd,NULL,NULL);
     if(client_sd<0){
         printf("accept error");
+        return;
+    }
+    if (set_nonblock(client_sd) < 0) {
+        perror("failed to set client socket to nonblock");
         return;
     }
     total_clients++;
@@ -66,8 +72,8 @@ void ev_read_cb(struct ev_loop *loop,struct ev_io *watcher,int event)
         printf("get the message:\n %s\n",buffer);
     }
 
-    send(watcher->fd,buffer,read,0);
-    bzero(buffer,read);
+     send(watcher->fd,buffer,read,0);
+     bzero(buffer,read);
 }
 void ev_loop_start(){
     while(1){

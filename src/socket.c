@@ -3,6 +3,7 @@
 //
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <fcntl.h>
 #include "socket.h"
 #include "dictionary.h"
 #include "iniparser.h"
@@ -34,3 +35,10 @@
      debug("listen port :%d",port);
      return server_fd;
 }
+ int set_nonblock(int fd) {
+     int flags = fcntl(fd, F_GETFL);
+     if (flags < 0) return flags;
+     flags |= O_NONBLOCK;
+     if (fcntl(fd, F_SETFL, flags) < 0) return -1;
+     return 0;
+ }
