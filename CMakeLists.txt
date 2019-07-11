@@ -24,7 +24,7 @@ endif ()
 # 查找目录下的所有源文件
 # 并将名称保存到 DIR_SRCS 变量
 aux_source_directory(src/ DIR_SRCS)
-add_executable(m_back ${DIR_SRCS})
+add_executable(m_back ${DIR_SRCS} src/ssl_tool.h src/ssl_tool.c src/model.h src/model.c)
 #pthread  posix的线程库
 #m  math库
 target_link_libraries(m_back pthread m http_parser)
