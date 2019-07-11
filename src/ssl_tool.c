@@ -1,73 +1,63 @@
 //
 // Created by oyo on 2019-07-11.
 //
+#include <resolv.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include "dictionary.h"
+#include "iniparser.h"
 #include "ssl_tool.h"
-
-
-SSL_CTX* init_server_ctx(void)
+#include "dbg.h"
+SSL_CTX* ssl_ctx;
+extern  dictionary* ini_file;
+void  init_server_ctx(void)
 {
-    SSL_METHOD *method;
-    SSL_CTX *ctx;
-
-    SSL_library_init();                 /* init algorithms library */
-    OpenSSL_add_all_algorithms();       /* load & register all cryptos, etc. */
-    SSL_load_error_strings();           /* load all error messages */
-    //method = SSLv23_server_method();  /* create new server-method instance */
-    method = TLSv1_server_method();
-    ctx = SSL_CTX_new(method);          /* create new context from method */
-    if ( ctx == NULL )
+    const char *cert_file = iniparser_getstring(ini_file,"server:cert_file","null");
+    debug("cert_file path is : %s", cert_file);
+    const char *key_file =iniparser_getstring(ini_file,"server:key_file","null");
+    debug("key_file path is : %s", key_file);
+    /* init algorithms library */
+    SSL_library_init();
+    /* load & register all cryptos, etc. */
+    OpenSSL_add_all_algorithms();
+    /* load all error messages */
+    SSL_load_error_strings();
+    /* create new server-method instance and create new context from method */
+    ssl_ctx = SSL_CTX_new(SSLv23_server_method());
+    if ( ssl_ctx == NULL )
     {
         ERR_print_errors_fp(stderr);
-        abort();
+        exit(-1);
     }
-    return ctx;
-}
-void load_certificates(SSL_CTX* ctx, char* CertFile, char* KeyFile)
-{
     /* set the local certificate from CertFile */
-    if ( SSL_CTX_use_certificate_file(ctx, CertFile, SSL_FILETYPE_PEM) <= 0 )
+    if ( SSL_CTX_use_certificate_file(ssl_ctx, cert_file, SSL_FILETYPE_PEM) <= 0 )
     {
         ERR_print_errors_fp(stderr);
         abort();
     }
-    /* set server private key password */
-    SSL_CTX_set_default_passwd_cb_userdata(ctx, (void*)PRIKEY_PASSWD);
     /* set the private key from KeyFile (may be the same as CertFile) */
-    if ( SSL_CTX_use_PrivateKey_file(ctx, KeyFile, SSL_FILETYPE_PEM) <= 0 )
+    if ( SSL_CTX_use_PrivateKey_file(ssl_ctx, key_file, SSL_FILETYPE_PEM) <= 0 )
     {
         ERR_print_errors_fp(stderr);
         abort();
     }
     /* verify private key */
-    if ( !SSL_CTX_check_private_key(ctx) )
+    if ( !SSL_CTX_check_private_key(ssl_ctx) )
     {
         fprintf(stderr, "Private key does not match the public certificate\n");
         abort();
     }
-    /* set SSL cipher type */
-    SSL_CTX_set_cipher_list(ctx, ALGO_TYPE);
 }
-void show_certs_info(SSL* ssl)
-{
-    X509 *cert;
-    char *line;
-
-    /* Get connect use algorithm type */
-    //printf("SSL connection using %s\n", SSL_get_cipher(ssl));
-    /* Get certificates (if available) */
-    cert = SSL_get_peer_certificate(ssl);
-    if ( cert != NULL )
-    {
-        printf("Server certificates:\n");
-        line = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
-        printf("Subject: %s\n", line);
-        free(line);
-        line = X509_NAME_oneline(X509_get_issuer_name(cert), 0, 0);
-        printf("Issuer: %s\n", line);
-        free(line);
-        X509_free(cert);
+int socket_add_ssl(int socket_in,SSL *ssl){
+    /* 基于 ctx 产生一个新的 SSL */
+    ssl = SSL_new(ssl_ctx);
+    /* 将连接用户的 socket 加入到 SSL */
+    SSL_set_fd(ssl, socket_in);
+    /* 建立 SSL 连接 */
+    if (SSL_accept(ssl) == -1) {
+        log_err("accept");
+        return -1;
     }
-    else
-        printf("No certificates.\n");
+    return 0;
 }
 

@@ -1,10 +1,5 @@
-#include "evbuffsock.h"
-
-#ifdef DEBUG
-#define _DEBUG(...) fprintf(stdout, __VA_ARGS__)
-#else
-#define _DEBUG(...) do {;} while (0)
-#endif
+#include "buffer.h"
+#include "dbg.h"
 
 struct Buffer *new_buffer(size_t length, size_t capacity)
 {
@@ -39,11 +34,11 @@ int buffer_expand(struct Buffer *buf, size_t need)
     size_t pos = buf->data - buf->orig;
     size_t expand = 0;
     size_t new_size = 0;
-    
-    _DEBUG("%s: need %lu, pos %lu\n", __FUNCTION__, need, pos);
+
+    debug("%s: need %lu, pos %lu\n", __FUNCTION__, need, pos);
     
     if (need <= pos) {
-        _DEBUG("%s: re-aligning\n", __FUNCTION__);
+        debug("%s: re-aligning\n", __FUNCTION__);
         // re-align
         memmove(buf->orig, buf->data, buf->offset);
         buf->data = buf->orig;
@@ -54,8 +49,8 @@ int buffer_expand(struct Buffer *buf, size_t need)
     while (expand < need) {
         expand = expand * 2;
     }
-    
-    _DEBUG("%s: expanding by %lu\n", __FUNCTION__, expand);
+
+    debug("%s: expanding by %lu\n", __FUNCTION__, expand);
     
     new_size = buf->length + expand;
     if (buf->capacity > 0 && new_size > buf->capacity) {
@@ -73,8 +68,8 @@ int buffer_add(struct Buffer *buf, void *source, size_t length)
 {
     size_t used = buf->data - buf->orig + buf->offset;
     int32_t need = used + length - buf->length;
-    
-    _DEBUG("%s: adding %lu - used %lu, need %d\n", __FUNCTION__, length, used, need);
+
+    debug("%s: adding %lu - used %lu, need %d\n", __FUNCTION__, length, used, need);
     
     if (need > 0) {
         if (!buffer_expand(buf, need)) {
