@@ -1,3 +1,6 @@
+
+apt-get install libssl-dev
+
 apt-get install  libev-dev   
 
 sudo apt-get install libsqlite3-dev  
