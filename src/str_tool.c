@@ -1,11 +1,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "strsplit.h"
-#include "strdup.h"
+#include "str_tool.h"
 
 int
-strsplit (const char *str, char *parts[], const char *delimiter) {
+str_split (const char *str, char *parts[], const char *delimiter) {
   char *pch;
   int i = 0;
   char *copy = NULL, *tmp = NULL;

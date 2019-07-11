@@ -70,11 +70,6 @@ int main(){
                 }
             }else{
                 log_info("new data from fd %d", events[i].data.fd);
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wint-conversion"
-                int rc = thread_pool_add(tp, handler_request, &events[i].data.fd);
-#pragma GCC diagnostic pop
-                check(rc != 0, "thread_pool_add");
             }
         }
     }
