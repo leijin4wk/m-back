@@ -14,6 +14,9 @@ int total_clients=0;
 struct ev_loop *loop;
 struct ev_io socket_accept;
 static void ev_accept_cb(struct ev_loop *loop,struct ev_io *watcher,int event);
+static void ev_read_cb(struct ev_loop *loop,struct ev_io *watcher,int event);
+static void ev_write_cb(struct ev_loop *loop, struct ev_io *watcher, int events);
+
 void ev_loop_init(){
     loop=ev_default_loop(0);
 }
@@ -47,7 +50,7 @@ static void ev_accept_cb(struct ev_loop *loop,struct ev_io *watcher,int event)
     ev_io_init(w_client,ev_read_cb,client_sd,EV_READ);
     ev_io_start(loop,w_client);
 }
-void ev_read_cb(struct ev_loop *loop,struct ev_io *watcher,int event)
+static void ev_read_cb(struct ev_loop *loop,struct ev_io *watcher,int event)
 {
     char buffer[BUFFER_SIZE];
     int read;
@@ -74,6 +77,9 @@ void ev_read_cb(struct ev_loop *loop,struct ev_io *watcher,int event)
 
      send(watcher->fd,buffer,read,0);
      bzero(buffer,read);
+}
+static void ev_write_cb(struct ev_loop *loop, struct ev_io *watcher, int events){
+
 }
 void ev_loop_start(){
     while(1){

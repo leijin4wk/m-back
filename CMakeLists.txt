@@ -16,6 +16,8 @@ if (DEBUG)
     message("DEBUG OPEN")
     add_definitions(-DDEBUG)
 endif ()
+
+include_directories(/usr/include/zdb)
 ##
 # 查找目录下的所有源文件
 # 并将名称保存到 DIR_SRCS 变量
