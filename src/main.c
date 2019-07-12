@@ -3,6 +3,7 @@
 #include "config.h"
 #include "event.h"
 #include "ssl_tool.h"
+#include "db_tool.h"
 #include "socket.h"
 #include "dbg.h"
 #define CONFIG_FILE_PATH "../config.ini"
@@ -11,6 +12,8 @@ int main(){
     debug("config_file load complete!");
     init_server_ctx();
     debug("ssl init complete!");
+    init_connection_pool();
+    debug("db connection_pool init complete!");
     int server_fd= init_server_socket();
     check_exit(server_fd<0,"server socket init fail!")
     debug("server_fd is %d init complete!",server_fd);
