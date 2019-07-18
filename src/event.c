@@ -47,7 +47,7 @@ void ev_accept_start(int server_fd){
 
 static void ev_accept_callback(int e_pool_fd,struct m_event *watcher,int events)
 {
-    struct sockaddr in_addr;
+    struct sockaddr_in in_addr;
     socklen_t in_len;
     memset(&in_addr, 0, sizeof(struct sockaddr_in));
     int in_fd;
@@ -62,11 +62,16 @@ static void ev_accept_callback(int e_pool_fd,struct m_event *watcher,int events)
                 break;
             }
         }
+        char *ip=inet_ntoa(in_addr.sin_addr);
+        log_info("connection from %s",ip);
+        char*client_ip=malloc(sizeof(ip)+1);
+        strcpy(client_ip,ip);
         int flag = set_nonblock(in_fd);
         check(flag == 0, "make_socket_non_blocking");
         log_info("new connection fd %d", in_fd);
         struct epoll_event event;
         struct http_client * client=malloc(sizeof(struct http_client));
+        client->client_ip=client_ip;
         client->event_fd=in_fd;
         client->event_type=EVENT_READ;
         event.data.ptr = (void *)client;
