@@ -4,6 +4,7 @@
 #include <resolv.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <stdbool.h>
 #include "dictionary.h"
 #include "iniparser.h"
 #include "ssl_tool.h"
@@ -48,16 +49,93 @@ void  init_server_ctx(void)
         abort();
     }
 }
-int socket_add_ssl(int socket_in,SSL *ssl){
+SSL* create_ssl(int socket_in){
     /* 基于 ctx 产生一个新的 SSL */
-    ssl = SSL_new(ssl_ctx);
+    SSL* ssl= SSL_new(ssl_ctx);
+    if (!ssl){
+        log_err("SSL_new error!\n");
+        return NULL;
+    }
     /* 将连接用户的 socket 加入到 SSL */
     SSL_set_fd(ssl, socket_in);
     /* 建立 SSL 连接 */
-    if (SSL_accept(ssl) == -1) {
-        log_err("accept");
-        return -1;
+    bool is_continue = true;
+    while(is_continue)
+    {
+        is_continue = false;
+        if(SSL_accept(ssl) != 1)
+        {
+            int code = -1;
+            int ret = SSL_get_error(ssl, code);
+            if (ret == SSL_ERROR_WANT_READ)
+            {
+                is_continue = true;
+            }
+            else
+            {
+                SSL_free(ssl);
+                ssl_ctx = NULL;
+                ssl = NULL;
+            }
+        }
+        else {
+            break;
+        }
     }
-    return 0;
+    return ssl;
 }
+int ssl_read(SSL* ssl, char* buffer, int ilen){
+    int res = 0, count = 0;;
+    while (true)
+    {
+        res = SSL_read(ssl, buffer + count, ilen - count);
+        int err_res = SSL_get_error(ssl, res);
+        if(err_res == SSL_ERROR_NONE)
+        {
+            if(res > 0)
+            {
+                count += res;
+                if (count >= ilen)
+                {
+                    break;
+                }
+                continue;
+            }
+        }
+        else
+        {
+            break;
+        }
+    }
 
+    return count;
+}
+int ssl_write(SSL* ssl, const char* buffer, int ilen){
+    int ires = 0, count = 0;;
+    while (true)
+    {
+        ires = SSL_write(ssl, buffer + count, ilen - count);
+        int err_res = SSL_get_error(ssl, ires);
+        if(err_res == SSL_ERROR_NONE)
+        {
+            if(ires > 0)
+            {
+                if (count >= ilen)
+                {
+                    break;
+                }
+                count += ires;
+                continue;
+            }
+        }
+        else if (err_res == SSL_ERROR_WANT_READ)
+        {
+            continue;
+        }
+        else
+        {
+            break;
+        }
+    }
+    return count;
+}

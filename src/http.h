@@ -28,7 +28,6 @@ struct http_response {
 
 struct http_client{
     int event_fd;
-    int event_type;
     char *client_ip;
     SSL *ssl;
     void (*handler)(struct http_request *request,struct http_request *response);

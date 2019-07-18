@@ -9,7 +9,7 @@
 void init_server_ctx(void);
 
 
-int socket_add_ssl(int socket_in,SSL *ssl);
+SSL*  create_ssl(int socket_in);
 
 
 #endif //M_BACK_SSL_TOOL_H
