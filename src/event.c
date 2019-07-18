@@ -12,6 +12,7 @@
 #include "http.h"
 #include "dbg.h"
 
+extern SSL_CTX* ssl_ctx;
 
 int total_clients=0;
 
@@ -66,14 +67,14 @@ static void ev_accept_callback(int e_pool_fd,struct m_event *watcher,int events)
         log_info("connection from %s",ip);
         char*client_ip=malloc(sizeof(ip)+1);
         strcpy(client_ip,ip);
-        int flag = set_nonblock(in_fd);
-        check(flag == 0, "make_socket_non_blocking");
+//        int flag = set_nonblock(in_fd);
+//        check(flag == 0, "make_socket_non_blocking");
         log_info("new connection fd %d", in_fd);
         struct epoll_event event;
         struct http_client * client=malloc(sizeof(struct http_client));
-        client->client_ip=client_ip;
         client->event_fd=in_fd;
         client->event_type=EVENT_READ;
+        client->client_ip=client_ip;
         event.data.ptr = (void *)client;
         event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
         int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, in_fd, &event);
@@ -86,6 +87,19 @@ static void ev_accept_callback(int e_pool_fd,struct m_event *watcher,int events)
 static void ev_read_callback(int e_pool_fd, struct http_client *client,int events)
 {
     log_info("有数据可读了");
+    /* 基于 ctx 产生一个新的 SSL */
+    SSL *ssl = SSL_new(ssl_ctx);
+    /* 将连接用户的 socket 加入到 SSL */
+    SSL_set_fd(ssl, client->event_fd);
+    /* 建立 SSL 连接 */
+    if (SSL_accept(ssl) == -1) {
+        perror("accept");
+        close(client->event_fd);
+        return;
+    }
+    log_info("ssl 连接成功了！");
+
+
 }
 static void ev_write_callback(int e_pool_fd,  struct http_client *client, int events){
 
