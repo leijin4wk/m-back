@@ -2,87 +2,119 @@
 // Created by Administrator on 2019/7/11.
 //
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <zconf.h>
+#include <netdb.h>
 #include "event.h"
 #include "socket.h"
+#include "http.h"
+#include "dbg.h"
 
-#define BUFFER_SIZE 1024
+
 int total_clients=0;
 
-struct ev_loop *loop;
-struct ev_io socket_accept;
-static void ev_accept_cb(struct ev_loop *loop,struct ev_io *watcher,int event);
-static void ev_read_cb(struct ev_loop *loop,struct ev_io *watcher,int event);
-static void ev_write_cb(struct ev_loop *loop, struct ev_io *watcher, int events);
+struct epoll_event *events;
+
+int e_pool_fd;
+
+static int socket_accept_fd;
+
+static void ev_accept_callback(int e_pool_fd,struct m_event *watcher,int events);
+static void ev_read_callback(int e_pool_fd, struct http_client *client,int events);
+static void ev_write_callback(int e_pool_fd, struct http_client *client, int events);
 
 void ev_loop_init(){
-    loop=ev_default_loop(0);
+    e_pool_fd = epoll_create1(0);
+    check_exit(e_pool_fd < 0, "epoll_create fail!");
+    events = (struct epoll_event *)malloc(sizeof(struct epoll_event) * MAXEVENTS);
+    check_exit(events == NULL, "epoll_event_create faill");
 }
 void ev_accept_start(int server_fd){
-    ev_io_init(&socket_accept,ev_accept_cb,server_fd,EV_READ);
-    ev_io_start(loop,&socket_accept);
+    struct epoll_event event;
+    socket_accept_fd=server_fd;
+    int flag=set_nonblock(server_fd);
+    check(flag== 0,"make server_fd non_blocking")
+    struct m_event *accept_event=malloc(sizeof(struct m_event));
+    check_exit(accept_event==NULL,"malloc m_event fail!");
+    accept_event->event_fd=socket_accept_fd;
+    event.data.ptr = (void *)accept_event;
+    event.events = EPOLLIN | EPOLLET;
+    int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, server_fd, &event);
+    check(rc == 0, "accept_fd add epoll_event!");
 }
 
-static void ev_accept_cb(struct ev_loop *loop,struct ev_io *watcher,int event)
+static void ev_accept_callback(int e_pool_fd,struct m_event *watcher,int events)
 {
-    //struct sockaddr_in client_addr;
-    int client_sd;
-    struct ev_io *w_client=(struct ev_io*)malloc(sizeof(struct ev_io));
-    if(EV_ERROR & event){
-        printf("error event in accept");
-        return ;
+    struct sockaddr in_addr;
+    socklen_t in_len;
+    memset(&in_addr, 0, sizeof(struct sockaddr_in));
+    int in_fd;
+    while(1) {
+        in_fd = accept(watcher->event_fd,&in_addr, &in_len);
+        if (in_fd < 0) {
+            if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
+                /* we have processed all incoming connections */
+                break;
+            } else {
+                log_err("accept error！");
+                break;
+            }
+        }
+        int flag = set_nonblock(in_fd);
+        check(flag == 0, "make_socket_non_blocking");
+        log_info("new connection fd %d", in_fd);
+        struct epoll_event event;
+        struct http_client * client=malloc(sizeof(struct http_client));
+        client->event_fd=in_fd;
+        client->event_type=EVENT_READ;
+        event.data.ptr = (void *)client;
+        event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
+        int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, in_fd, &event);
+        check_exit(rc != 0, "zv_epoll_add fail");
+        total_clients++;
+        log_info("当前连接人数%d",total_clients);
     }
-    //client_sd=accept(watcher->fd,(struct sockaddr *)&client_addr,&client_len);
-    client_sd=accept(watcher->fd,NULL,NULL);
-    if(client_sd<0){
-        printf("accept error");
-        return;
-    }
-    if (set_nonblock(client_sd) < 0) {
-        perror("failed to set client socket to nonblock");
-        return;
-    }
-    total_clients++;
-    printf("successfully connected with client.\n");
-    printf("%d client connected .\n",total_clients);
-    ev_io_init(w_client,ev_read_cb,client_sd,EV_READ);
-    ev_io_start(loop,w_client);
+    // end of while of accept
 }
-static void ev_read_cb(struct ev_loop *loop,struct ev_io *watcher,int event)
+static void ev_read_callback(int e_pool_fd, struct http_client *client,int events)
 {
-    char buffer[BUFFER_SIZE];
-    int read;
-    if(EV_ERROR & event){
-        printf("error event in read");
-        return;
-    }
-    read=recv(watcher->fd,buffer,BUFFER_SIZE,0);
-    if(read==0){
-        ev_io_stop(loop,watcher);
-        free(watcher);
-        perror("peer might closing");
-        total_clients--;
-        printf("%d client connected .\n",total_clients);
-        return;
-    }
-    else{
-        printf("#######################\n");
-        printf("read is %d\n",read);
-        printf("#######################\n");
-        buffer[read]='\0';
-        printf("get the message:\n %s\n",buffer);
-    }
-
-     send(watcher->fd,buffer,read,0);
-     bzero(buffer,read);
+    log_info("有数据可读了");
 }
-static void ev_write_cb(struct ev_loop *loop, struct ev_io *watcher, int events){
+static void ev_write_callback(int e_pool_fd,  struct http_client *client, int events){
 
 }
+
 void ev_loop_start(){
-    while(1){
-        ev_loop(loop,0);
+    log_info("server loop started.");
+    int i,n;
+    int time=10;
+    int flag=1;
+    while (flag) {
+        n = epoll_wait(e_pool_fd, events, MAXEVENTS, time);
+        for (i = 0; i < n; i++) {
+            struct m_event *r = (struct m_event *)events[i].data.ptr;
+            if(r->event_fd==socket_accept_fd){
+                ev_accept_callback(e_pool_fd,r,events[i].events);
+            }else{
+                if ((events[i].events & EPOLLERR) ||
+                    (events[i].events & EPOLLHUP) ||
+                    (!(events[i].events & EPOLLIN))) {
+                    log_err("epoll error fd: %d", r->event_fd);
+                    close(r->event_fd);
+                    free(r);
+                    continue;
+                }
+                struct http_client *r = (struct http_client *)events[i].data.ptr;
+                if(r->event_type==EVENT_READ){
+                    ev_read_callback(e_pool_fd,r,events[i].events);
+                }else if(r->event_type==EVENT_WRITE){
+                    ev_write_callback(e_pool_fd,r,events[i].events);
+                }else{
+                    log_err("epoll error fd: %d", r->event_fd);
+                }
+            }
+        }
     }
 }

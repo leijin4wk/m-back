@@ -27,4 +27,6 @@
 
 #define check_exit(A, M, ...) if((A)) { log_err(M "\n", ##__VA_ARGS__); exit(1);}
 
+#define check(A, M, ...) if((A)) { log_info(M "\n", ##__VA_ARGS__);}
+
 #endif

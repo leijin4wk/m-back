@@ -1,8 +1,7 @@
  //
 // Created by Administrator on 2019/7/11.
 //
-#include <sys/socket.h>
-#include <netinet/in.h>
+
 #include <fcntl.h>
 #include "socket.h"
 #include "dictionary.h"
