@@ -5,6 +5,7 @@
 #ifndef M_BACK_HTTP_H
 #define M_BACK_HTTP_H
 #include <openssl/ssl.h>
+#include "buffer.h"
 // 保存HTTP报文头部的字段的链表
 struct http_header {
     char *name;
@@ -32,11 +33,10 @@ struct http_client{
     SSL *ssl;
     void (*handler)(struct http_request *request,struct http_request *response);
     struct http_request *request;
-    char* request_data;
-    int request_data_len;
+    struct Buffer* request_data;
     struct http_request *response;
-    char* response_data;
-    int response_data_len;
+    struct Buffer* response_data;
+
 };
 
 
