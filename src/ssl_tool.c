@@ -84,18 +84,18 @@ SSL* create_ssl(int socket_in){
     }
     return ssl;
 }
-int ssl_read(SSL* ssl, char* buffer, int ilen){
+int ssl_read(SSL* ssl, char* buffer, int len){
     int res = 0, count = 0;;
     while (true)
     {
-        res = SSL_read(ssl, buffer + count, ilen - count);
+        res = SSL_read(ssl, buffer + count, len - count);
         int err_res = SSL_get_error(ssl, res);
         if(err_res == SSL_ERROR_NONE)
         {
             if(res > 0)
             {
                 count += res;
-                if (count >= ilen)
+                if (count >= len)
                 {
                     break;
                 }
@@ -110,21 +110,21 @@ int ssl_read(SSL* ssl, char* buffer, int ilen){
 
     return count;
 }
-int ssl_write(SSL* ssl, const char* buffer, int ilen){
-    int ires = 0, count = 0;;
+int ssl_write(SSL* ssl, const char* buffer, int len){
+    int res = 0, count = 0;;
     while (true)
     {
-        ires = SSL_write(ssl, buffer + count, ilen - count);
-        int err_res = SSL_get_error(ssl, ires);
+        res = SSL_write(ssl, buffer + count, len - count);
+        int err_res = SSL_get_error(ssl, res);
         if(err_res == SSL_ERROR_NONE)
         {
-            if(ires > 0)
+            if(res > 0)
             {
-                if (count >= ilen)
+                if (count >= len)
                 {
                     break;
                 }
-                count += ires;
+                count += res;
                 continue;
             }
         }
