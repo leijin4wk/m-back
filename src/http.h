@@ -35,18 +35,23 @@ struct http_client{
     int event_fd;
     char *client_ip;
     SSL *ssl;
-    void (*handler)(struct http_request *request,struct http_request *response);
     struct http_request *request;
     struct Buffer* request_data;
     struct http_response *response;
     struct Buffer* response_data;
-
+    void (*handler)(struct http_request *request,struct http_request *response);
 };
 
 #define alloc_cpy(dest, src, len) \
     dest = malloc(len + 1);\
     memcpy(dest, src, len);\
     dest[len] = '\0';
+
+struct http_client* new_http_client();
+
+void free_http_client(struct http_client* client);
+
+
 void handler_request(void *ptr);
 
 #endif //M_BACK_HTTP_H

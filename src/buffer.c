@@ -7,6 +7,7 @@ struct Buffer *new_buffer(size_t length, size_t capacity)
     
     buf = malloc(sizeof(struct Buffer));
     buf->orig = malloc(length);
+    buf->sent=buf->orig;
     buf->data = buf->orig;
     buf->offset = 0;
     buf->length = length;
@@ -88,39 +89,7 @@ void buffer_drain(struct Buffer *buf, size_t length)
     if (length >= buf->offset) {
         buffer_reset(buf);
     } else {
-        buf->data += length;
+        buf->sent += length;
         buf->offset -= length;
     }
-}
-
-int buffer_read_fd(struct Buffer *buf, int fd)
-{
-    int n;
-    int need;
-    
-    if (ioctl(fd, FIONREAD, &n) == -1 || n > 4096) {
-        n = 4096;
-    }
-    
-    need = n - BUFFER_AVAILABLE(buf);
-    if (need > 0 && !buffer_expand(buf, need)) {
-        return -1;
-    }
-    
-    n = recv(fd, buf->data + buf->offset, n, 0);
-    if (n > 0) {
-        buf->offset += n;
-    }
-    
-    return n;
-}
-
-int buffer_write_fd(struct Buffer *buf, int fd)
-{
-    int n;
-    n = send(fd, buf->data, buf->offset, 0);
-    if (n > 0) {
-        buffer_drain(buf, n);
-    }
-    return n;
 }

@@ -13,8 +13,25 @@ static void delete_http_header(struct http_header *header);
 static inline struct http_header *add_http_header(struct http_request *request);
 static int https_read_data(struct http_client *client);
 static int parser_https_data(struct http_client *client);
+
+struct http_client* new_http_client(){
+    struct http_client *client = malloc(sizeof(struct http_client));
+    if(client==NULL){
+        log_err("new http client fail!");
+        return NULL;
+    }
+    client->request_data=new_buffer(MAX_LINE, MAX_REQUEST_SIZE);
+    client->response_data=new_buffer(MAX_LINE, MAX_REQUEST_SIZE);
+    return client;
+}
+
+void free_http_client(struct http_client* client){
+
+}
+
+
 // 初始化一个新的HTTP请求
-static struct http_request *new_http_request() {
+struct http_request *new_http_request() {
     struct http_request *request = malloc(sizeof(struct http_request));
     request->headers = NULL;
     request->url = NULL;
@@ -154,7 +171,5 @@ void handler_request(void *ptr) {
         return;
     }
     parser_request_data(request);
-
-
 
 }
