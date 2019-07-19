@@ -6,6 +6,10 @@
 #define M_BACK_HTTP_H
 #include <openssl/ssl.h>
 #include "buffer.h"
+//http 请求最大长度 2M
+#define MAX_REQUEST_SIZE 2*1024*1024
+//每次读取数据最大 8K
+#define MAX_LINE 8192
 // 保存HTTP报文头部的字段的链表
 struct http_header {
     char *name;

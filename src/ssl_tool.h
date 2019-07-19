@@ -5,14 +5,14 @@
 #ifndef M_BACK_SSL_TOOL_H
 #define M_BACK_SSL_TOOL_H
 #include <openssl/ssl.h>
-
+#include "buffer.h"
 void init_server_ctx(void);
 
 
 SSL*  create_ssl(int socket_in);
 
-int ssl_read(SSL* ssl, char* buffer, int len);
+struct Buffer* ssl_read(SSL* ssl);
 
-int ssl_write(SSL* ssl, const char* buffer, int len);
+int ssl_write(SSL* ssl, const struct Buffer* write_buffer);
 
 #endif //M_BACK_SSL_TOOL_H

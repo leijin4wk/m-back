@@ -9,6 +9,9 @@
 #include "iniparser.h"
 #include "ssl_tool.h"
 #include "dbg.h"
+
+#include "http.h"
+
 SSL_CTX* ssl_ctx;
 extern  dictionary* ini_file;
 void  init_server_ctx(void)
@@ -84,20 +87,23 @@ SSL* create_ssl(int socket_in){
     }
     return ssl;
 }
-int ssl_read(SSL* ssl, char* buffer, int len){
-    int res = 0, count = 0;;
+struct Buffer* ssl_read(SSL* ssl){
+    struct Buffer* read_buffer=new_buffer(MAX_LINE,MAX_REQUEST_SIZE);
+    char buff[MAX_LINE];
+    int res = 0;
     while (true)
     {
-        res = SSL_read(ssl, buffer + count, len - count);
+        res = SSL_read(ssl, buff, MAX_LINE);
         int err_res = SSL_get_error(ssl, res);
         if(err_res == SSL_ERROR_NONE)
         {
             if(res > 0)
             {
-                count += res;
-                if (count >= len)
+                if (buffer_add(read_buffer,buff,res)==0)
                 {
-                    break;
+                    log_err("buff add fail!");
+                    free(read_buffer);
+                    return NULL;
                 }
                 continue;
             }
@@ -107,20 +113,19 @@ int ssl_read(SSL* ssl, char* buffer, int len){
             break;
         }
     }
-
-    return count;
+    return read_buffer;
 }
-int ssl_write(SSL* ssl, const char* buffer, int len){
-    int res = 0, count = 0;;
+int ssl_write(SSL* ssl, const struct Buffer* write_buffer){
+    int res = 0, count = 0;
     while (true)
     {
-        res = SSL_write(ssl, buffer + count, len - count);
+        res = SSL_write(ssl, write_buffer->orig + count, write_buffer->offset - count);
         int err_res = SSL_get_error(ssl, res);
         if(err_res == SSL_ERROR_NONE)
         {
             if(res > 0)
             {
-                if (count >= len)
+                if (count >= write_buffer->offset)
                 {
                     break;
                 }

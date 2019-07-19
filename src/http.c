@@ -11,7 +11,8 @@ static void delete_http_request(struct http_request *request);
 static struct http_header *new_http_header();
 static void delete_http_header(struct http_header *header);
 static inline struct http_header *add_http_header(struct http_request *request);
-static void https_read_data(struct http_client *client);
+static int https_read_data(struct http_client *client);
+static int parser_https_data(struct http_client *client);
 // 初始化一个新的HTTP请求
 static struct http_request *new_http_request() {
     struct http_request *request = malloc(sizeof(struct http_request));
@@ -110,41 +111,50 @@ int on_message_complete(http_parser* parser) {
     return 0;
 }
 
-static void https_read_data(struct http_client *client)
+static int https_read_data(struct http_client *client)
 {
     /* 基于 ctx 产生一个新的 SSL */
     SSL *ssl = create_ssl(client->event_fd);
     /* 将连接用户的 socket 加入到 SSL */
+    if (ssl==NULL){
+        return -1;
+    }
     check(ssl!=NULL,"ssl 连接成功了!")
-    log_info("有数据可读了");
+    client->ssl=ssl;
+    struct Buffer* read_buffer =ssl_read(ssl);
+    if(read_buffer==NULL){
+        log_err("读取数据失败！");
+        return -1;
+    }
+    client->request_data=read_buffer;
+    log_info("数据读取结束！");
+    return 0;
+}
 
-
+static int parser_request_data(struct http_client *client){
+    struct http_parser* parser = (http_parser*)malloc(sizeof(http_parser));
+    http_parser_init(parser, HTTP_REQUEST); // 初始化parser为Request类型
+    http_parser_settings parser_set;
+    parser_set.on_message_begin = on_message_begin;
+    parser_set.on_header_field = on_header_field;
+    parser_set.on_header_value = on_header_value;
+    parser_set.on_url = on_url;
+    parser_set.on_body = on_body;
+    parser_set.on_headers_complete = on_headers_complete;
+    parser_set.on_message_complete = on_message_complete;
+    http_parser_execute(parser, &parser_set, client->request_data->orig, client->request_data->offset);
+    client->request=parser->data;
+    log_info("aaaa!");
 }
 void handler_request(void *ptr) {
-    struct http_client *r = (struct http_client *)ptr;
-    https_read_data(r);
+    int res=0;
+    struct http_client *request = (struct http_client *)ptr;
+    res=https_read_data(request);
+    if(res<0){
+        return;
+    }
+    parser_request_data(request);
 
-//    int* fd=(int*)ptr;
-//    log_info("handler request fd %d", *fd);
-//    size_t len = 80*1024;
-//    char buf[len];
-//    ssize_t recved;
-//    recved = recv(*fd, buf, len, 0);
-//    if (recved < 0) {
-//        log_err("recv err!");
-//    }
-//    log_info("size %d\n",recved);
-//    struct http_parser* parser = (http_parser*)malloc(sizeof(http_parser));
-//    http_parser_init(parser, HTTP_REQUEST); // 初始化parser为Request类型
-//    http_parser_settings parser_set;
-//    parser_set.on_message_begin = on_message_begin;
-//    parser_set.on_header_field = on_header_field;
-//    parser_set.on_header_value = on_header_value;
-//    parser_set.on_url = on_url;
-//    parser_set.on_body = on_body;
-//    parser_set.on_headers_complete = on_headers_complete;
-//    parser_set.on_message_complete = on_message_complete;
-//    http_parser_execute(parser, &parser_set, buf, strlen(buf));
 
 
 }
