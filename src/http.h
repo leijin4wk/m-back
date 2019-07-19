@@ -34,11 +34,10 @@ struct http_client{
     void (*handler)(struct http_request *request,struct http_request *response);
     struct http_request *request;
     struct Buffer* request_data;
-    struct http_request *response;
+    struct http_response *response;
     struct Buffer* response_data;
 
 };
-
 
 #define alloc_cpy(dest, src, len) \
     dest = malloc(len + 1);\
