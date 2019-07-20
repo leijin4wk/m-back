@@ -51,6 +51,10 @@ struct http_client* new_http_client();
 
 void free_http_client(struct http_client* client);
 
-int parser_http_buffer(struct http_client *client);
+int  parser_http_request_buffer(struct http_client *client);
+
+int create_http_response_buffer(struct http_client* client);
+
+int http_process(struct http_client *client);
 
 #endif //M_BACK_HTTP_H

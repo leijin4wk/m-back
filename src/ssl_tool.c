@@ -12,8 +12,8 @@
 #define ssl_errno_s		ERR_error_string(ERR_get_error(), NULL)
 SSL_CTX* ssl_ctx;
 extern  dictionary* ini_file;
-static int
-buffer_read_tls(struct http_client* client);
+static int buffer_read_tls(struct http_client* client);
+static int buffer_write_tls(struct http_client* client);
 void  init_server_ctx(void)
 {
     const char *cert_file = iniparser_getstring(ini_file,"server:cert_file","null");
@@ -94,8 +94,7 @@ int create_ssl(struct http_client *client){
      }
 }
 //返回零代表要继续循环，返回1代表结束
-static int
-buffer_read_tls(struct http_client* client)
+static int buffer_read_tls(struct http_client* client)
 {
     int		r;
     char buff[MAX_LINE];
@@ -130,25 +129,47 @@ buffer_read_tls(struct http_client* client)
     return 1;
 }
 int ssl_write(struct http_client* client){
-    int res = 0, count = 0;
+    int res = 0;
     while (true) {
-        res = SSL_write(client->ssl, client->response_data->sent + count, client->response_data->offset - count);
-        int err_res = SSL_get_error(client->ssl, res);
-        if (res > 0) {
-            if (client->response_data->sent == client->response_data->data) {
-                return 1;
-            }
-            count += count;
-            buffer_drain(client->response_data, res);
+        res= buffer_write_tls(client);
+        if(res==0){
             continue;
-        } else {
-            if (err_res == SSL_ERROR_WANT_WRITE) {
-                return 0;
-            } else {
-                log_err("ret < 0");
-                return -1;
-            }
-
+        }else if(res>0){
+            return 1;
+        }else{
+            return -1;
         }
+    }
+}
+static int buffer_write_tls(struct http_client* client){
+    int		r;
+    ERR_clear_error();
+    r = SSL_write(client->ssl, client->response_data->sent, client->response_data->offset-client->response_data->sent_size);
+    if (r <= 0) {
+        r = SSL_get_error(client->ssl, r);
+        switch (r) {
+            case SSL_ERROR_WANT_READ:
+            case SSL_ERROR_WANT_WRITE:
+                return 0;
+            case SSL_ERROR_SYSCALL:
+                switch (errno) {
+                    case EINTR:
+                        break;
+                    case EAGAIN:
+                        break;
+                    default:
+                        return -1;
+                }
+                /* FALLTHROUGH */
+            default:
+                log_err("SSL_write(): %s", ssl_errno_s);
+                return -1;
+        }
+    }
+    buffer_drain(client->response_data, r);
+    if(client->response_data->sent_size==client->response_data->offset){
+        return 1;
+    }else{
+        return 0;
     }
 }

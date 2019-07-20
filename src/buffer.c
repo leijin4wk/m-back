@@ -7,6 +7,7 @@ struct Buffer *new_buffer(size_t length, size_t capacity)
     buf = malloc(sizeof(struct Buffer));
     buf->orig = malloc(length);
     buf->sent=buf->orig;
+    buf->sent_size=0;
     buf->data = buf->orig;
     buf->offset = 0;
     buf->length = length;
@@ -87,6 +88,7 @@ void buffer_drain(struct Buffer *buf, size_t length)
         buffer_reset(buf);
     } else {
         buf->sent += length;
+        buf->sent_size+=length;
         buf->offset -= length;
     }
 }

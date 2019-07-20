@@ -134,13 +134,28 @@ static void ev_read_callback(int e_pool_fd,struct m_event* watcher){
         free_http_client(client);
         return;
     }
-    struct epoll_event event;
-    parser_http_buffer(client);
+    res=parser_http_request_buffer(client);
+    if(res<0){
+        free_http_client(client);
+        return;
+    }
     log_info("http parser complete!");
 }
 
 static void ev_write_callback(int e_pool_fd,struct m_event* watcher){
+    int res=0;
     struct http_client* client= (struct http_client *)watcher;
+    res=create_http_response_buffer(client);
+    if(res<0){
+        free_http_client(client);
+        return;
+    }
+    res=ssl_write(client);
+    if(res<0){
+        free_http_client(client);
+        return;
+    }
+    log_info("http send complete!");
 }
 
 void ev_loop_start(){

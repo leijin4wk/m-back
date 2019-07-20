@@ -34,6 +34,9 @@ struct http_client* new_http_client(){
         log_err("new http client fail!");
         return NULL;
     }
+
+    client->response=NULL;
+    client->request=NULL;
     client->request_data=new_buffer(MAX_LINE, MAX_REQUEST_SIZE);
     client->response_data=new_buffer(MAX_LINE, MAX_REQUEST_SIZE);
     return client;
@@ -143,10 +146,24 @@ static int on_message_complete(http_parser* parser) {
     return 0;
 }
 
-int parser_http_buffer(struct http_client * client){
+int parser_http_request_buffer(struct http_client * client){
+    if (client->request_data==NULL){
+        return -1;
+    }
     struct http_parser* parser = (http_parser*)malloc(sizeof(http_parser));
     http_parser_init(parser, HTTP_REQUEST); // 初始化parser为Request类型
     http_parser_execute(parser, &parser_set, client->request_data->orig, client->request_data->offset);
     client->request=parser->data;
+    return 1;
+}
+int http_process(struct http_client *client){
+    //TODO new response
+}
+
+int create_http_response_buffer(struct http_client* client){
+    if(client->response==NULL){
+        return -1;
+    }
+    //TODO response intto buffer
     return 1;
 }

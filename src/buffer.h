@@ -18,6 +18,7 @@ struct Buffer {
     char *data;
     char *orig;
     char * sent;//用于记录已经发送的位置
+    size_t sent_size;//用于记录已经字节数
     size_t offset;
     size_t length;
     size_t capacity;
