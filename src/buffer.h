@@ -28,7 +28,6 @@ void free_buffer(struct Buffer *buf);
 void buffer_reset(struct Buffer *buf);
 int buffer_add(struct Buffer *buf, void *source, size_t length);
 void buffer_drain(struct Buffer *buf, size_t length);
-int buffer_write_fd(struct Buffer *buf, int fd);
 int buffer_expand(struct Buffer *buf, size_t need);
 
 #endif

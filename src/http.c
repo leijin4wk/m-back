@@ -11,8 +11,22 @@ static void delete_http_request(struct http_request *request);
 static struct http_header *new_http_header();
 static void delete_http_header(struct http_header *header);
 static inline struct http_header *add_http_header(struct http_request *request);
-static int https_read_data(struct http_client *client);
-static int parser_https_data(struct http_client *client);
+static int on_message_begin(http_parser* parser);
+static int on_url(http_parser* parser, const char* at, size_t length);
+static int on_header_field(http_parser* parser, const char* at, size_t length);
+static  int on_headers_complete(http_parser* parser);
+static int on_header_value(http_parser* parser, const char* at, size_t length);
+static int on_message_complete(http_parser* parser);
+static int on_body(http_parser* parser, const char* at, size_t length);
+http_parser_settings parser_set= {
+        .on_message_begin = on_message_begin,
+        .on_header_field = on_header_field,
+        .on_header_value = on_header_value,
+        .on_url = on_url,
+        .on_body = on_body,
+        .on_headers_complete = on_headers_complete,
+        .on_message_complete = on_message_complete
+};
 
 struct http_client* new_http_client(){
     struct http_client *client = malloc(sizeof(struct http_client));
@@ -28,6 +42,7 @@ struct http_client* new_http_client(){
 void free_http_client(struct http_client* client){
 
 }
+
 
 
 // 初始化一个新的HTTP请求
@@ -82,13 +97,13 @@ static struct http_header *add_http_header(struct http_request *request) {
     return request->headers;
 }
 
-int on_message_begin(http_parser* parser) {
-    log_info("\n***MESSAGE BEGIN***\n\n");
+static int on_message_begin(http_parser* parser) {
+    log_info("***MESSAGE BEGIN***");
     parser->data=new_http_request();
     return 0;
 }
 
-int on_url(http_parser* parser, const char* at, size_t length) {
+static int on_url(http_parser* parser, const char* at, size_t length) {
     log_info("Url: %.*s\n", (int)length, at);
     struct http_request *request = (struct http_request *) parser->data;
     request->method = (char *)http_method_str(parser->method);
@@ -98,14 +113,14 @@ int on_url(http_parser* parser, const char* at, size_t length) {
     return 0;
 }
 
-int on_header_field(http_parser* parser, const char* at, size_t length) {
+static int on_header_field(http_parser* parser, const char* at, size_t length) {
     struct http_request *request = (struct http_request *) parser->data;
     struct http_header *header = add_http_header(request);
     alloc_cpy(header->name, at, length)
     return 0;
 }
 
-int on_header_value(http_parser* parser, const char* at, size_t length) {
+static int on_header_value(http_parser* parser, const char* at, size_t length) {
     struct http_request *request = (struct http_request *) parser->data;
     struct http_header *header = request->headers;
     while (header->next != NULL) {
@@ -114,62 +129,25 @@ int on_header_value(http_parser* parser, const char* at, size_t length) {
     alloc_cpy(header->value, at, length)
    return 0;
 }
-int on_headers_complete(http_parser* parser) {
+static int on_headers_complete(http_parser* parser) {
     log_info("\n***HEADERS COMPLETE***\n\n");
     return 0;
 }
-int on_body(http_parser* parser, const char* at, size_t length) {
+static int on_body(http_parser* parser, const char* at, size_t length) {
     struct http_request *request = (struct http_request *) parser->data;
     alloc_cpy(request->body, at, length)
     return 0;
 }
-int on_message_complete(http_parser* parser) {
+static int on_message_complete(http_parser* parser) {
     log_info("\n***MESSAGE COMPLETE***\n\n");
     return 0;
 }
 
-static int https_read_data(struct http_client *client)
-{
-    /* 基于 ctx 产生一个新的 SSL */
-    SSL *ssl = create_ssl(client->event_fd);
-    /* 将连接用户的 socket 加入到 SSL */
-    if (ssl==NULL){
-        return -1;
-    }
-    check(ssl!=NULL,"ssl 连接成功了!")
-    client->ssl=ssl;
-    struct Buffer* read_buffer =ssl_read(ssl);
-    if(read_buffer==NULL){
-        log_err("读取数据失败！");
-        return -1;
-    }
-    client->request_data=read_buffer;
-    log_info("数据读取结束！");
-    return 0;
-}
-
-static int parser_request_data(struct http_client *client){
+int parser_http_buffer(struct http_client * client){
     struct http_parser* parser = (http_parser*)malloc(sizeof(http_parser));
     http_parser_init(parser, HTTP_REQUEST); // 初始化parser为Request类型
-    http_parser_settings parser_set;
-    parser_set.on_message_begin = on_message_begin;
-    parser_set.on_header_field = on_header_field;
-    parser_set.on_header_value = on_header_value;
-    parser_set.on_url = on_url;
-    parser_set.on_body = on_body;
-    parser_set.on_headers_complete = on_headers_complete;
-    parser_set.on_message_complete = on_message_complete;
     http_parser_execute(parser, &parser_set, client->request_data->orig, client->request_data->offset);
     client->request=parser->data;
     log_info("aaaa!");
-}
-void handler_request(void *ptr) {
-    int res=0;
-    struct http_client *request = (struct http_client *)ptr;
-    res=https_read_data(request);
-    if(res<0){
-        return;
-    }
-    parser_request_data(request);
-
+    return 0;
 }

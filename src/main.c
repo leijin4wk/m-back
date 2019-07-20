@@ -15,7 +15,11 @@ int main(){
     init_connection_pool();
     log_info("db connection_pool init complete!");
     int server_fd= init_server_socket();
-    check_exit(server_fd<0,"server socket init fail!")
+    if(server_fd<0){
+        log_err("server socket init fail!");
+        exit(-1);
+    }
+
     log_info("server_fd is %d init complete!",server_fd);
     ev_loop_init();
     ev_accept_start(server_fd);

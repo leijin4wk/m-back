@@ -86,7 +86,7 @@ static void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
     memset(&in_addr, 0, sizeof(struct sockaddr_in));
     int in_fd;
     while(1) {
-        in_fd = accept(watcher->event_fd,&in_addr, &in_len);
+        in_fd = accept(watcher->event_fd, &in_addr, &in_len);
         if (in_fd < 0) {
             if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
                 /* we have processed all incoming connections */
@@ -97,106 +97,59 @@ static void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
             }
         }
         int flag = set_nonblock(in_fd);
-        if(flag<0){
+        if (flag < 0) {
             log_err("make_socket_non_blocking fail!");
             continue;
         }
         struct epoll_event event;
         struct http_client *client = new_http_client();
-        char *ip=inet_ntoa(in_addr.sin_addr);
-        char*client_ip=malloc(sizeof(ip)+1);
-        strcpy(client_ip,ip);
+        char *ip = inet_ntoa(in_addr.sin_addr);
+        char *client_ip = malloc(sizeof(ip) + 1);
+        strcpy(client_ip, ip);
         client->event_fd = in_fd;
-        client->client_ip=client_ip;
-        SSL* ssl= NULL;
-        flag = create_ssl(in_fd,ssl);
-        if(flag<0){
-            log_err("fd: %d ,create_ssl fail!",in_fd);
-            free(client_ip);
-            free(client);
+        client->client_ip = client_ip;
+        SSL *ssl = create_ssl(in_fd);
+        if (ssl == NULL) {
+            log_err("create_ssl fail!");
             continue;
-        }else if(flag==0){
-            event.data.ptr = (void *) client;
-            event.events = EPOLLIN |EPOLLOUT| EPOLLET | EPOLLONESHOT;
-            int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, in_fd, &event);
-            if (rc != 0) {
-                log_err("zv_epoll_add fail!");
-                free(client_ip);
-                free(client);
-                continue;
-            }
-        }else {
-            client->ssl = ssl;
-            event.data.ptr = (void *) client;
-            event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
-            int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, in_fd, &event);
-            if (rc != 0) {
-                log_err("epoll_add fail!");
-                SSL_free(ssl);
-                free(client_ip);
-                free(client);
-                continue;
-            }
-            total_clients++;
-            log_info("添加SSL连接:%d ,ip:%s , 当前连接人数%d", in_fd,ip, total_clients);
         }
-    }
-}
-
-static void ev_add_ssl(int e_pool_fd,struct m_event* watcher){
-    struct epoll_event event;
-    struct http_client *client =(struct http_client*)watcher;
-    SSL* ssl= NULL;
-    int flag = create_ssl(client->event_fd,ssl);
-    if(flag<0){
-        log_err("fd: %d ,create_ssl fail!",client->event_fd);
-        free(client->client_ip);
-        free(client);
-        return;
-    }else if(flag==0){
-        event.data.ptr = (void *) client;
-        event.events = EPOLLIN |EPOLLOUT| EPOLLET | EPOLLONESHOT;
-        int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
-        if (rc != 0) {
-            free(client->client_ip);
-            free(client);
-            log_err("zv_epoll_add fail!");
-            return;
-        }
-    }else {
         client->ssl = ssl;
         event.data.ptr = (void *) client;
         event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
-        int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
+        int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, in_fd, &event);
         if (rc != 0) {
-            free(client->client_ip);
-            free(client);
+            log_err("epoll_add fail!");
             SSL_free(ssl);
-            log_err("zv_epoll_add fail!");
-            return;
+            free(client_ip);
+            free(client);
+            continue;
         }
         total_clients++;
-        log_info("添加SSL连接:%d ,ip:%s , 当前连接人数%d", client->event_fd,client->client_ip, total_clients);
+        log_info("添加SSL连接:%d ,ip:%s , 当前连接人数%d", in_fd, ip, total_clients);
     }
 }
 
-
 static void ev_read_callback(int e_pool_fd,struct m_event* watcher){
     struct http_client* client= (struct http_client *)watcher;
-    if(client->ssl==NULL){
-        ev_add_ssl(e_pool_fd,client);
+    int res=ssl_read(client);
+    struct epoll_event event;
+    if(res==1){
+        parser_http_buffer(client);
+    }else if(res==0){
+        event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
+        event.data.ptr= (void *) client;
+        int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
+        if (rc != 0) {
+            free_http_client(client);
+            return;
+        }
     }else{
-
+        free_http_client(client);
     }
 }
 
 static void ev_write_callback(int e_pool_fd,struct m_event* watcher){
     struct http_client* client= (struct http_client *)watcher;
-    if(client->ssl==NULL){
-        ev_add_ssl(e_pool_fd,client);
-    }else{
-
-    }
 }
 
 void ev_loop_start(){

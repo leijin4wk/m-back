@@ -12,7 +12,6 @@
  int init_server_socket(void){
      int server_fd;
      const int port =iniparser_getint(ini_file,"server:port","null");
-     debug("port is : %d", port);
      struct sockaddr_in addr;
      if((server_fd=socket(AF_INET,SOCK_STREAM,0))<0){
          log_err("socket error");
@@ -26,12 +25,11 @@
          log_err("bind error");
          return -1;
      }
-     debug("bind port :%d",port);
      if(listen(server_fd,0)<0){
          log_err("listen error");
          return -1;
      }
-     debug("listen port :%d",port);
+     log_info("listen port :%d",port);
      return server_fd;
 }
  int set_nonblock(int fd) {
