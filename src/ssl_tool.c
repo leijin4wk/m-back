@@ -17,9 +17,9 @@ buffer_read_tls(struct http_client* client);
 void  init_server_ctx(void)
 {
     const char *cert_file = iniparser_getstring(ini_file,"server:cert_file","null");
-    debug("cert_file path is : %s", cert_file);
+    log_info("cert_file path is : %s", cert_file);
     const char *key_file =iniparser_getstring(ini_file,"server:key_file","null");
-    debug("key_file path is : %s", key_file);
+    log_info("key_file path is : %s", key_file);
     /* init algorithms library */
     SSL_library_init();
     /* load & register all cryptos, etc. */
