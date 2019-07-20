@@ -38,8 +38,6 @@ int buffer_expand(struct Buffer *buf, size_t need)
     log_info("%s: need %lu, pos %lu\n", __FUNCTION__, need, pos);
     
     if (need <= pos) {
-        debug("%s: re-aligning\n", __FUNCTION__);
-        // re-align
         memmove(buf->orig, buf->data, buf->offset);
         buf->data = buf->orig;
         return 1;
