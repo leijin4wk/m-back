@@ -36,7 +36,7 @@ int buffer_expand(struct Buffer *buf, size_t need)
     size_t expand = 0;
     size_t new_size = 0;
 
-    debug("%s: need %lu, pos %lu\n", __FUNCTION__, need, pos);
+    log_info("%s: need %lu, pos %lu\n", __FUNCTION__, need, pos);
     
     if (need <= pos) {
         debug("%s: re-aligning\n", __FUNCTION__);
@@ -51,7 +51,7 @@ int buffer_expand(struct Buffer *buf, size_t need)
         expand = expand * 2;
     }
 
-    debug("%s: expanding by %lu\n", __FUNCTION__, expand);
+    log_info("%s: expanding by %lu\n", __FUNCTION__, expand);
     
     new_size = buf->length + expand;
     if (buf->capacity > 0 && new_size > buf->capacity) {
@@ -70,7 +70,7 @@ int buffer_add(struct Buffer *buf, void *source, size_t length)
     size_t used = buf->data - buf->orig + buf->offset;
     int32_t need = used + length - buf->length;
 
-    debug("%s: adding %lu - used %lu, need %d\n", __FUNCTION__, length, used, need);
+    log_info("%s: adding %d - used %d, length %d", __FUNCTION__, (int)length, (int)used, (int)buf->length);
     
     if (need > 0) {
         if (!buffer_expand(buf, need)) {

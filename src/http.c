@@ -104,7 +104,7 @@ static int on_message_begin(http_parser* parser) {
 }
 
 static int on_url(http_parser* parser, const char* at, size_t length) {
-    log_info("Url: %.*s\n", (int)length, at);
+    log_info("Url: %.*s", (int)length, at);
     struct http_request *request = (struct http_request *) parser->data;
     request->method = (char *)http_method_str(parser->method);
     request->http_major = parser->http_major;
@@ -130,7 +130,7 @@ static int on_header_value(http_parser* parser, const char* at, size_t length) {
    return 0;
 }
 static int on_headers_complete(http_parser* parser) {
-    log_info("\n***HEADERS COMPLETE***\n\n");
+    log_info("***HEADERS COMPLETE***");
     return 0;
 }
 static int on_body(http_parser* parser, const char* at, size_t length) {
@@ -139,7 +139,7 @@ static int on_body(http_parser* parser, const char* at, size_t length) {
     return 0;
 }
 static int on_message_complete(http_parser* parser) {
-    log_info("\n***MESSAGE COMPLETE***\n\n");
+    log_info("***MESSAGE COMPLETE***");
     return 0;
 }
 
@@ -148,6 +148,5 @@ int parser_http_buffer(struct http_client * client){
     http_parser_init(parser, HTTP_REQUEST); // 初始化parser为Request类型
     http_parser_execute(parser, &parser_set, client->request_data->orig, client->request_data->offset);
     client->request=parser->data;
-    log_info("aaaa!");
     return 0;
 }

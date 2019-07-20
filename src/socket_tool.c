@@ -11,7 +11,11 @@
  extern  dictionary* ini_file;
  int init_server_socket(void){
      int server_fd;
-     const int port =iniparser_getint(ini_file,"server:port","null");
+     const int port =iniparser_getint(ini_file,"server:port",-1);
+     if(port<0){
+         log_err("port read  error");
+         return -1;
+     }
      struct sockaddr_in addr;
      if((server_fd=socket(AF_INET,SOCK_STREAM,0))<0){
          log_err("socket error");
