@@ -148,5 +148,5 @@ int parser_http_buffer(struct http_client * client){
     http_parser_init(parser, HTTP_REQUEST); // 初始化parser为Request类型
     http_parser_execute(parser, &parser_set, client->request_data->orig, client->request_data->offset);
     client->request=parser->data;
-    return 0;
+    return 1;
 }
