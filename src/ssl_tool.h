@@ -9,7 +9,7 @@
 void init_server_ctx(void);
 
 
-SSL* create_ssl(int socket_in);
+int create_ssl(struct http_client* clien);
 
 int ssl_read(struct http_client* client);
 

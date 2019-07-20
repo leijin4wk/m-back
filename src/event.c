@@ -108,20 +108,18 @@ static void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
         strcpy(client_ip, ip);
         client->event_fd = in_fd;
         client->client_ip = client_ip;
-        SSL *ssl = create_ssl(in_fd);
-        if (ssl == NULL) {
+        flag = create_ssl(client);
+        if (flag < 0) {
             log_err("create_ssl fail!");
+            free_http_client(client);
             continue;
         }
-        client->ssl = ssl;
         event.data.ptr = (void *) client;
         event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
         int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, in_fd, &event);
         if (rc != 0) {
             log_err("epoll_add fail!");
-            SSL_free(ssl);
-            free(client_ip);
-            free(client);
+            free_http_client(client);
             continue;
         }
         total_clients++;
@@ -132,20 +130,13 @@ static void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
 static void ev_read_callback(int e_pool_fd,struct m_event* watcher){
     struct http_client* client= (struct http_client *)watcher;
     int res=ssl_read(client);
-    struct epoll_event event;
-    if(res==1){
-        parser_http_buffer(client);
-    }else if(res==0){
-        event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
-        event.data.ptr= (void *) client;
-        int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
-        if (rc != 0) {
-            free_http_client(client);
-            return;
-        }
-    }else{
+    if(res<0){
         free_http_client(client);
+        return;
     }
+    struct epoll_event event;
+    parser_http_buffer(client);
+    log_info("http parser complete!");
 }
 
 static void ev_write_callback(int e_pool_fd,struct m_event* watcher){
@@ -175,6 +166,7 @@ void ev_loop_start(){
                 else if(events[i].events&EPOLLIN )//有数据可读，写socket
                 {
                     ev_read_callback(e_pool_fd,r);
+
                 }else if(events[i].events&EPOLLOUT) //有数据待发送，写socket
                 {
                     ev_write_callback(e_pool_fd,r);

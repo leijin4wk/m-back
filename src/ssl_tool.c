@@ -9,9 +9,11 @@
 #include "iniparser.h"
 #include "ssl_tool.h"
 #include "dbg.h"
-
+#define ssl_errno_s		ERR_error_string(ERR_get_error(), NULL)
 SSL_CTX* ssl_ctx;
 extern  dictionary* ini_file;
+static int
+buffer_read_tls(struct http_client* client);
 void  init_server_ctx(void)
 {
     const char *cert_file = iniparser_getstring(ini_file,"server:cert_file","null");
@@ -50,62 +52,82 @@ void  init_server_ctx(void)
         abort();
     }
 }
-SSL* create_ssl(int socket_in){
+int create_ssl(struct http_client *client){
     /* 基于 ctx 产生一个新的 SSL */
-    SSL* ssl= SSL_new(ssl_ctx);
+    client->ssl= SSL_new(ssl_ctx);
+    if (client->ssl == NULL) {
+        log_err("SSL_new(): %s",ssl_errno_s);
+        return -1;
+    }
     /* 将连接用户的 socket 加入到 SSL */
-    SSL_set_fd(ssl, socket_in);
+    SSL_set_fd(client->ssl,client->event_fd);
+    SSL_set_accept_state(client->ssl);
+    SSL_set_app_data(client->ssl, client);
     /* 建立 SSL 连接 */
-    while (true) {
-        if (SSL_accept(ssl) != 1) {
-            int ret = SSL_get_error(ssl, -1);
-            if (ret == SSL_ERROR_WANT_READ) {
-                continue;
-            } else {
-                SSL_free(ssl);
-                return NULL;
-            }
-        }else{
-            break;
+    ERR_clear_error();
+    int	r= SSL_accept(client->ssl);
+    if (r <= 0) {
+        r = SSL_get_error(client->ssl, r);
+        switch (r) {
+            case SSL_ERROR_WANT_READ:
+            case SSL_ERROR_WANT_WRITE:
+                return 0;
+            default:
+                log_err("SSL_accept(): %s", ssl_errno_s);
+                return -1;
         }
     }
-    return ssl;
+    return 0;
 }
 
  int ssl_read(struct http_client* client) {
-     char buff[MAX_LINE];
      int res = 0;
-     int i=0;
      while (true) {
-         i++;
-         res = SSL_read(client->ssl, buff, MAX_LINE);
-         int err_res = SSL_get_error(client->ssl, res);
-         if(res > 0)
-         {
-             if (buffer_add(client->request_data,buff,res)==0)
-             {
-                 log_err("buff add fail!");
-                 return -1;
-             }
+         res= buffer_read_tls(client);
+         if(res==0){
              continue;
-         }else if(res==0){
-             if(err_res==SSL_ERROR_NONE) {
-                 log_info("client_fd is %d read complete ,loop times %d",client->event_fd,i);
-                 return 1;
-             }else{
-                 log_err("ret is 0 but err is %d,loop times %d",err_res,i);
-                 return -1;
-             }
+         }else if(res>0){
+             return 1;
          }else{
-             if(err_res == SSL_ERROR_WANT_READ) {
-                 log_info("client_fd is %d,ret is %d,err is SSL_ERROR_WANT_READ ,loop times %d",client->event_fd,res,i);
-                 return 0;
-             }else{
-                 log_err("ret < 0");
-                 return -1;
-             }
+             return -1;
          }
      }
+}
+//返回零代表要继续循环，返回1代表结束
+static int
+buffer_read_tls(struct http_client* client)
+{
+    int		r;
+    char buff[MAX_LINE];
+    ERR_clear_error();
+    r = SSL_read(client->ssl, buff, MAX_LINE);
+    if (r <= 0) {
+        r = SSL_get_error(client->ssl, r);
+        switch (r) {
+            case SSL_ERROR_WANT_READ:
+            case SSL_ERROR_WANT_WRITE:
+                return 0;
+            case SSL_ERROR_SYSCALL:
+                switch (errno) {
+                    case EINTR:
+                        return 1;
+                    case EAGAIN:
+                        return 0;
+                    default:
+                        return -1;
+                }
+                /* FALLTHROUGH */
+            default:
+                log_err("SSL_read(): %s", ssl_errno_s);
+                return -1;
+        }
+    }
+    if (buffer_add(client->request_data,buff,r)==0)
+    {
+        log_err("buff add fail!");
+        return -1;
+    }
+    return 1;
 }
 int ssl_write(struct http_client* client){
     int res = 0, count = 0;
