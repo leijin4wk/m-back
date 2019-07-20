@@ -10,6 +10,12 @@
 #define MAX_REQUEST_SIZE 2*1024*1024
 //每次读取数据最大 8K
 #define MAX_LINE 8192
+
+#define alloc_cpy(dest, src, len) \
+    dest = malloc(len + 1);\
+    memcpy(dest, src, len);\
+    dest[len] = '\0';
+
 // 保存HTTP报文头部的字段的链表
 struct http_header {
     char *name;
@@ -42,10 +48,6 @@ struct http_client{
     void (*handler)(struct http_request *request,struct http_request *response);
 };
 
-#define alloc_cpy(dest, src, len) \
-    dest = malloc(len + 1);\
-    memcpy(dest, src, len);\
-    dest[len] = '\0';
 
 struct http_client* new_http_client();
 

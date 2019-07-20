@@ -8,7 +8,6 @@
 #include "http.h"
 void init_server_ctx(void);
 
-
 int create_ssl(struct http_client* clien);
 
 int ssl_read(struct http_client* client);

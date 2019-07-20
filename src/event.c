@@ -104,10 +104,8 @@ static void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
         struct epoll_event event;
         struct http_client *client = new_http_client();
         char *ip = inet_ntoa(in_addr.sin_addr);
-        char *client_ip = malloc(sizeof(ip) + 1);
-        strcpy(client_ip, ip);
+        alloc_cpy(client->client_ip,ip,strlen(ip))
         client->event_fd = in_fd;
-        client->client_ip = client_ip;
         flag = create_ssl(client);
         if (flag < 0) {
             log_err("create_ssl fail!");
