@@ -4,7 +4,6 @@
 struct Buffer *new_buffer(size_t length, size_t capacity)
 {
     struct Buffer *buf;
-    
     buf = malloc(sizeof(struct Buffer));
     buf->orig = malloc(length);
     buf->sent=buf->orig;
@@ -70,7 +69,7 @@ int buffer_add(struct Buffer *buf, void *source, size_t length)
     size_t used = buf->data - buf->orig + buf->offset;
     int32_t need = used + length - buf->length;
 
-    log_info("%s: adding %d - used %d, length %d", __FUNCTION__, (int)length, (int)used, (int)buf->length);
+    log_info("%s: adding %d,used %d,length %d", __FUNCTION__, (int)length, (int)used, (int)buf->length);
     
     if (need > 0) {
         if (!buffer_expand(buf, need)) {
