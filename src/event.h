@@ -8,10 +8,6 @@
 #include "ssl_tool.h"
 //最大同时处理事件数
 #define MAXEVENTS 1024
-//接受可读事件
-#define EVENT_READ 1
-//接受可写事件
-#define EVENT_WRITE 1
 
 struct m_event {
     int event_fd;
