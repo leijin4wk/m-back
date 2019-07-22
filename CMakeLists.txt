@@ -36,3 +36,5 @@ target_link_libraries(m_back zdb)
 target_link_libraries(m_back http_parser)
 #https  stl openssl依赖库
 target_link_libraries(m_back ssl crypto)
+#json 解析库
+target_link_libraries(m_back yajl)
