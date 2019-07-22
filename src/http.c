@@ -5,6 +5,7 @@
 #include <http_parser.h>
 #include "http.h"
 #include "dbg.h"
+#include "buffer.h"
 #include "ssl_tool.h"
 static struct http_request *new_http_request();
 static void delete_http_request(struct http_request *request);
@@ -18,6 +19,7 @@ static  int on_headers_complete(http_parser* parser);
 static int on_header_value(http_parser* parser, const char* at, size_t length);
 static int on_message_complete(http_parser* parser);
 static int on_body(http_parser* parser, const char* at, size_t length);
+
 http_parser_settings parser_set= {
         .on_message_begin = on_message_begin,
         .on_header_field = on_header_field,
@@ -27,25 +29,6 @@ http_parser_settings parser_set= {
         .on_headers_complete = on_headers_complete,
         .on_message_complete = on_message_complete
 };
-
-struct http_client* new_http_client(){
-    struct http_client *client = malloc(sizeof(struct http_client));
-    if(client==NULL){
-        log_err("new http client fail!");
-        return NULL;
-    }
-
-    client->response=NULL;
-    client->request=NULL;
-    client->request_data=new_buffer(MAX_LINE, MAX_REQUEST_SIZE);
-    client->response_data=new_buffer(MAX_LINE, MAX_REQUEST_SIZE);
-    return client;
-}
-
-void free_http_client(struct http_client* client){
-
-}
-
 
 
 // 初始化一个新的HTTP请求
@@ -144,26 +127,4 @@ static int on_body(http_parser* parser, const char* at, size_t length) {
 static int on_message_complete(http_parser* parser) {
     log_info("***MESSAGE COMPLETE***");
     return 0;
-}
-
-int parser_http_request_buffer(struct http_client * client){
-    if (client->request_data==NULL){
-        return -1;
-    }
-    struct http_parser* parser = (http_parser*)malloc(sizeof(http_parser));
-    http_parser_init(parser, HTTP_REQUEST); // 初始化parser为Request类型
-    http_parser_execute(parser, &parser_set, client->request_data->orig, client->request_data->offset);
-    client->request=parser->data;
-    return 1;
-}
-int http_process(struct http_client *client){
-    //TODO new response
-}
-
-int create_http_response_buffer(struct http_client* client){
-    if(client->response==NULL){
-        return -1;
-    }
-    //TODO response intto buffer
-    return 1;
 }

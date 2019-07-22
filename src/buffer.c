@@ -1,6 +1,8 @@
+#include <http_parser.h>
 #include "buffer.h"
 #include "dbg.h"
 
+extern http_parser_settings parser_set;
 struct Buffer *new_buffer(size_t length, size_t capacity)
 {
     struct Buffer *buf;
@@ -91,4 +93,16 @@ void buffer_drain(struct Buffer *buf, size_t length)
         buf->sent_size+=length;
         buf->offset -= length;
     }
+}
+struct http_parser* parser_http_request_buffer(struct Buffer *buf){
+    struct http_parser* parser = (http_parser*)malloc(sizeof(http_parser));
+    http_parser_init(parser, HTTP_REQUEST); // 初始化parser为Request类型
+    http_parser_execute(parser, &parser_set, buf->orig, buf->offset);
+    return parser;
+}
+
+struct Buffer * create_http_response_buffer(struct http_response *http_response){
+    struct Buffer * buffer= new_buffer(MAX_LINE, MAX_RESPONSE_SIZE);
+    //TODO response intto buffer
+    return buffer;
 }

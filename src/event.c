@@ -7,11 +7,14 @@
 #include <stdio.h>
 #include <zconf.h>
 #include <netdb.h>
+#include <http_parser.h>
 #include "event.h"
 #include "socket_tool.h"
-#include "http.h"
+#include "ssl_tool.h"
 #include "dbg.h"
 
+static struct http_client* new_http_client();
+static void free_http_client(struct http_client* client);
 
 int total_clients=0;
 
@@ -22,8 +25,6 @@ int e_pool_fd;
 static int socket_accept_fd;
 
 static struct m_event* new_m_event();
-
-static void ev_add_ssl(int e_pool_fd,struct m_event* watcher);
 
 static void ev_accept_callback(int e_pool_fd,struct m_event *watcher);
 
@@ -42,6 +43,24 @@ static struct m_event* new_m_event(){
     event->ssl=NULL;
     return event;
 }
+static struct http_client* new_http_client(){
+    struct http_client *client = malloc(sizeof(struct http_client));
+    if(client==NULL){
+        log_err("new http client fail!");
+        return NULL;
+    }
+
+    client->response=NULL;
+    client->request=NULL;
+    client->request_data=NULL;
+    client->response_data=new_buffer(MAX_LINE, MAX_RESPONSE_SIZE);
+    return client;
+}
+
+static void free_http_client(struct http_client* client){
+    //todo
+}
+
 void ev_loop_init(){
     e_pool_fd = epoll_create1(0);
     if (e_pool_fd<0){
@@ -106,12 +125,13 @@ static void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
         char *ip = inet_ntoa(in_addr.sin_addr);
         alloc_cpy(client->client_ip,ip,strlen(ip))
         client->event_fd = in_fd;
-        flag = create_ssl(client);
-        if (flag < 0) {
+        SSL *ssl=create_ssl(client->event_fd);
+        if (ssl == NULL) {
             log_err("create_ssl fail!");
             free_http_client(client);
             continue;
         }
+        client->ssl=ssl;
         event.data.ptr = (void *) client;
         event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
         int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, in_fd, &event);
@@ -127,28 +147,23 @@ static void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
 
 static void ev_read_callback(int e_pool_fd,struct m_event* watcher){
     struct http_client* client= (struct http_client *)watcher;
-    int res=ssl_read(client);
+    struct Buffer* read_buff=new_buffer(MAX_LINE, MAX_REQUEST_SIZE);
+    int res=ssl_read(client->ssl,read_buff);
     if(res<0){
         free_http_client(client);
         return;
     }
-    res=parser_http_request_buffer(client);
-    if(res<0){
-        free_http_client(client);
-        return;
-    }
+    client->request_data=read_buff;
+    struct http_parser* http_parser=parser_http_request_buffer(client->request_data);
+    client->request=(struct http_request *)http_parser->data;
     log_info("http parser complete!");
 }
 
 static void ev_write_callback(int e_pool_fd,struct m_event* watcher){
     int res=0;
     struct http_client* client= (struct http_client *)watcher;
-    res=create_http_response_buffer(client);
-    if(res<0){
-        free_http_client(client);
-        return;
-    }
-    res=ssl_write(client);
+    struct Buffer* read_buff=create_http_response_buffer(client->response);
+    res=ssl_write(client->ssl,read_buff);
     if(res<0){
         free_http_client(client);
         return;
@@ -189,4 +204,8 @@ void ev_loop_start(){
             }
         }
     }
+}
+
+int process(struct http_client *client){
+    //TODO new response
 }

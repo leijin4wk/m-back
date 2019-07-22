@@ -12,8 +12,8 @@
 #define ssl_errno_s		ERR_error_string(ERR_get_error(), NULL)
 SSL_CTX* ssl_ctx;
 extern  dictionary* ini_file;
-static int buffer_read_tls(struct http_client* client);
-static int buffer_write_tls(struct http_client* client);
+static int buffer_read_tls(SSL *ssl,struct Buffer *read_buff);
+static int buffer_write_tls(SSL *ssl,struct Buffer *write_buff);
 void  init_server_ctx(void)
 {
     const char *cert_file = iniparser_getstring(ini_file,"server:cert_file","null");
@@ -52,38 +52,38 @@ void  init_server_ctx(void)
         abort();
     }
 }
-int create_ssl(struct http_client *client){
+SSL * create_ssl(int event_fd){
     /* 基于 ctx 产生一个新的 SSL */
-    client->ssl= SSL_new(ssl_ctx);
-    if (client->ssl == NULL) {
+    SSL * ssl= SSL_new(ssl_ctx);
+    if (ssl == NULL) {
         log_err("SSL_new(): %s",ssl_errno_s);
-        return -1;
+        return NULL;
     }
     /* 将连接用户的 socket 加入到 SSL */
-    SSL_set_fd(client->ssl,client->event_fd);
-    SSL_set_accept_state(client->ssl);
-    SSL_set_app_data(client->ssl, client);
+    SSL_set_fd(ssl,event_fd);
+    SSL_set_accept_state(ssl);
+    SSL_set_app_data(ssl, event_fd);
     /* 建立 SSL 连接 */
     ERR_clear_error();
-    int	r= SSL_accept(client->ssl);
+    int	r= SSL_accept(ssl);
     if (r <= 0) {
-        r = SSL_get_error(client->ssl, r);
+        r = SSL_get_error(ssl, r);
         switch (r) {
             case SSL_ERROR_WANT_READ:
             case SSL_ERROR_WANT_WRITE:
-                return 0;
+                return ssl;
             default:
                 log_err("SSL_accept(): %s", ssl_errno_s);
-                return -1;
+                return NULL;
         }
     }
-    return 0;
+    return ssl;
 }
 
- int ssl_read(struct http_client* client) {
+ int ssl_read(SSL *ssl,struct Buffer *read_buff) {
      int res = 0;
      while (true) {
-         res= buffer_read_tls(client);
+         res= buffer_read_tls(ssl,read_buff);
          if(res==0){
              continue;
          }else if(res>0){
@@ -94,14 +94,14 @@ int create_ssl(struct http_client *client){
      }
 }
 //返回零代表要继续循环，返回1代表结束
-static int buffer_read_tls(struct http_client* client)
+static int buffer_read_tls(SSL *ssl,struct Buffer *read_buff)
 {
     int		r;
     char buff[MAX_LINE];
     ERR_clear_error();
-    r = SSL_read(client->ssl, buff, MAX_LINE);
+    r = SSL_read(ssl, buff, MAX_LINE);
     if (r <= 0) {
-        r = SSL_get_error(client->ssl, r);
+        r = SSL_get_error(ssl, r);
         switch (r) {
             case SSL_ERROR_WANT_READ:
             case SSL_ERROR_WANT_WRITE:
@@ -121,17 +121,17 @@ static int buffer_read_tls(struct http_client* client)
                 return -1;
         }
     }
-    if (buffer_add(client->request_data,buff,r)==0)
+    if (buffer_add(read_buff,buff,r)==0)
     {
         log_err("buff add fail!");
         return -1;
     }
     return 1;
 }
-int ssl_write(struct http_client* client){
+int ssl_write(SSL *ssl,struct Buffer *write_buff){
     int res = 0;
     while (true) {
-        res= buffer_write_tls(client);
+        res= buffer_write_tls(ssl,write_buff);
         if(res==0){
             continue;
         }else if(res>0){
@@ -141,12 +141,12 @@ int ssl_write(struct http_client* client){
         }
     }
 }
-static int buffer_write_tls(struct http_client* client){
+static int buffer_write_tls(SSL *ssl,struct Buffer *write_buff){
     int		r;
     ERR_clear_error();
-    r = SSL_write(client->ssl, client->response_data->sent, client->response_data->offset-client->response_data->sent_size);
+    r = SSL_write(ssl, write_buff->sent, write_buff->offset-write_buff->sent_size);
     if (r <= 0) {
-        r = SSL_get_error(client->ssl, r);
+        r = SSL_get_error(ssl, r);
         switch (r) {
             case SSL_ERROR_WANT_READ:
             case SSL_ERROR_WANT_WRITE:
@@ -166,8 +166,8 @@ static int buffer_write_tls(struct http_client* client){
                 return -1;
         }
     }
-    buffer_drain(client->response_data, r);
-    if(client->response_data->sent_size==client->response_data->offset){
+    buffer_drain(write_buff, r);
+    if(write_buff->sent_size==write_buff->offset){
         return 1;
     }else{
         return 0;
