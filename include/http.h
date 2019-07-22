@@ -5,6 +5,7 @@
 #ifndef M_BACK_HTTP_H
 #define M_BACK_HTTP_H
 #include <openssl/ssl.h>
+#include <zdb.h>
 
 //http 请求最大长度 2M
 #define MAX_REQUEST_SIZE 2*1024*1024
@@ -31,6 +32,7 @@ struct http_request {
     unsigned int flags;
     unsigned short http_major, http_minor;
     struct http_header *headers;
+    ConnectionPool_T data_pool;
 };
 
 struct http_response {

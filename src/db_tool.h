@@ -6,8 +6,6 @@
 #define MSERVER_M_DB_H
 
 #include <zdb.h>
-ConnectionPool_T pool;
-
 void init_connection_pool();
 
 

@@ -4,5 +4,10 @@
 
 #ifndef M_BACK_MODULE_H
 #define M_BACK_MODULE_H
-
+struct module{
+    char* path;
+    void* handler;
+    char *func;
+};
+int load_and_init_module();
 #endif //M_BACK_MODULE_H

@@ -1,7 +1,7 @@
 # 查找当前目录下的所有源文件
 # 并将名称保存到 DIR_LIB_SRCS 变量
-MESSAGE(STATUS "make home start!")
+MESSAGE(STATUS "make route start!")
 aux_source_directory(. DIR_LIB_SRCS)
 # 生成链接库
-add_library (home SHARED ${DIR_LIB_SRCS})
-MESSAGE(STATUS "make home end！")
+add_library (route SHARED ${DIR_LIB_SRCS})
+MESSAGE(STATUS "make route end!")
