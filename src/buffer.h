@@ -25,4 +25,5 @@ void buffer_drain(struct Buffer *buf, size_t length);
 int buffer_expand(struct Buffer *buf, size_t need);
 struct http_parser* parser_http_request_buffer(struct Buffer *buf);
 struct Buffer *create_http_response_buffer(struct http_response *http_response);
+struct Buffer *read_file_to_buffer(const char* file_name);
 #endif

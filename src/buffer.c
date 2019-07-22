@@ -106,3 +106,18 @@ struct Buffer * create_http_response_buffer(struct http_response *http_response)
     //TODO response intto buffer
     return buffer;
 }
+
+struct Buffer *read_file_to_buffer(const char* file_name){
+    char buff[MAX_LINE];
+    struct Buffer* file_buffer=new_buffer(MAX_LINE,10*1024);
+    FILE * fp = fopen(file_name, "r");
+    if(fp==NULL){
+        log_info("%s 文件打开失败！",file_name);
+    }
+    while(!feof(fp)) {
+        if(fgets(buff,MAX_LINE,fp)!=NULL)
+            buffer_add(file_buffer,buff,MAX_LINE);
+    }
+    fclose(fp);
+    return file_buffer;
+}
