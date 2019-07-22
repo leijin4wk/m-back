@@ -9,5 +9,5 @@ struct module{
     void* handler;
     char *func;
 };
-int load_and_init_module();
+void load_and_init_module();
 #endif //M_BACK_MODULE_H

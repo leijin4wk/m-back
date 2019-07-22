@@ -1,4 +1,6 @@
 #include <http_parser.h>
+#include <fcntl.h>
+#include <zconf.h>
 #include "buffer.h"
 #include "dbg.h"
 
@@ -109,15 +111,21 @@ struct Buffer * create_http_response_buffer(struct http_response *http_response)
 
 struct Buffer *read_file_to_buffer(const char* file_name){
     char buff[MAX_LINE];
-    struct Buffer* file_buffer=new_buffer(MAX_LINE,10*1024);
-    FILE * fp = fopen(file_name, "r");
-    if(fp==NULL){
+    struct Buffer* file_buffer=new_buffer(MAX_LINE,4*1024);
+    int fd= open(file_name, O_RDONLY);
+    if(fd<0){
         log_info("%s 文件打开失败！",file_name);
+        free_buffer(file_buffer);
+        return NULL;
     }
-    while(!feof(fp)) {
-        if(fgets(buff,MAX_LINE,fp)!=NULL)
-            buffer_add(file_buffer,buff,MAX_LINE);
+    int res=0;
+    while((res=read(fd,buff,MAX_LINE))!=0) {
+        buffer_add(file_buffer,buff,res);
     }
-    fclose(fp);
+    buffer_add(file_buffer,"\0",1);
+    close(fd);
     return file_buffer;
+}
+void buffer_to_string(const struct Buffer * buffer){
+    printf("Url: %.*s\n", (int)buffer->offset, buffer->orig);
 }

@@ -4,4 +4,4 @@ MESSAGE(STATUS "make home start!")
 aux_source_directory(. DIR_LIB_SRCS)
 # 生成链接库
 add_library (home SHARED ${DIR_LIB_SRCS})
-MESSAGE(STATUS "make home end！")
+MESSAGE(STATUS "make home end!")

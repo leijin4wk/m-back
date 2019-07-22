@@ -11,7 +11,7 @@
 #define MAX_REQUEST_SIZE 2*1024*1024
 #define MAX_RESPONSE_SIZE 2*1024*1024
 //每次读取数据最大 8K
-#define MAX_LINE 8192
+#define MAX_LINE 4096
 
 #define alloc_cpy(dest, src, len) \
     dest = malloc(len + 1);\
