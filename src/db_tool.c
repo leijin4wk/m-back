@@ -3,11 +3,17 @@
 //
 #include "db_tool.h"
 #include <string.h>
-#include "iniparser.h"
-extern dictionary* ini_file;
+#include <cJSON.h>
+#include "dbg.h"
+extern cJSON *json_config;
 ConnectionPool_T pool;
 void init_connection_pool() {
-    const char *url = iniparser_getstring(ini_file,"db:url","null");
+    cJSON *db_url_item=cJSON_GetObjectItem(json_config,"db_url");
+    if(db_url_item==NULL){
+        log_err("db_url is not config!");
+        exit(1);
+    }
+    char* url=db_url_item->valuestring;
     URL_T dbUrl = URL_new(url);
     pool = ConnectionPool_new(dbUrl);
     ConnectionPool_start(pool);

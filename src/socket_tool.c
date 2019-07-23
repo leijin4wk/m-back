@@ -3,19 +3,19 @@
 //
 
 #include <fcntl.h>
+#include <cJSON.h>
 #include "socket_tool.h"
-#include "dictionary.h"
-#include "iniparser.h"
 #include "dbg.h"
+ extern cJSON *json_config;
 
- extern  dictionary* ini_file;
  int init_server_socket(void){
      int server_fd;
-     const int port =iniparser_getint(ini_file,"server:port",-1);
-     if(port<0){
-         log_err("port read  error");
+     cJSON *port_item=cJSON_GetObjectItem(json_config,"port");
+     if(port_item==NULL){
+         log_err("port is not  config!");
          return -1;
      }
+     int port=port_item->valueint;
      struct sockaddr_in addr;
      if((server_fd=socket(AF_INET,SOCK_STREAM,0))<0){
          log_err("socket error");

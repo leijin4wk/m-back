@@ -5,20 +5,30 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <stdbool.h>
-#include "dictionary.h"
-#include "iniparser.h"
+#include <cJSON.h>
 #include "ssl_tool.h"
 #include "dbg.h"
 #define ssl_errno_s		ERR_error_string(ERR_get_error(), NULL)
 SSL_CTX* ssl_ctx;
-extern  dictionary* ini_file;
+extern cJSON *json_config;
 static int buffer_read_tls(SSL *ssl,struct Buffer *read_buff);
 static int buffer_write_tls(SSL *ssl,struct Buffer *write_buff);
 void  init_server_ctx(void)
 {
-    const char *cert_file = iniparser_getstring(ini_file,"server:cert_file","null");
+
+    cJSON *cert_file_item=cJSON_GetObjectItem(json_config,"cert_file");
+    if(cert_file_item==NULL){
+        log_err("config file read fail!");
+        exit(-1);
+    }
+    cJSON *key_file_item=cJSON_GetObjectItem(json_config,"key_file");
+    if(key_file_item==NULL){
+        log_err("config file read fail!");
+        exit(-1);
+    }
+    const char *cert_file = cert_file_item->valuestring;
     log_info("cert_file path is : %s", cert_file);
-    const char *key_file =iniparser_getstring(ini_file,"server:key_file","null");
+    const char *key_file =key_file_item->valuestring;
     log_info("key_file path is : %s", key_file);
     /* init algorithms library */
     SSL_library_init();
