@@ -30,7 +30,7 @@ add_subdirectory(web/home)
 add_subdirectory(web/route)
 ##生成可执行代码
 add_executable(m_back ${DIR_SRCS})
-
+#json 解析库
 target_link_libraries(m_back /usr/local/lib/libcjson.so)
 #pthread  posix的线程库
 target_link_libraries(m_back pthread)
@@ -40,7 +40,5 @@ target_link_libraries(m_back zdb)
 target_link_libraries(m_back http_parser)
 #https  stl openssl依赖库
 target_link_libraries(m_back ssl crypto)
-#json 解析库
-target_link_libraries(m_back cjson)
 #dl
 target_link_libraries(m_back dl)
