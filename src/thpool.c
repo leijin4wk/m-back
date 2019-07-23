@@ -1,14 +1,3 @@
-/* ********************************
- * Author:       Johan Hanssen Seferidis
- * License:	     MIT
- * Description:  Library providing a threading pool where you can add
- *               work. For usage, check the thpool.h file or README.md
- *
- *//** @file thpool.h *//*
- *
- ********************************/
-
-#define _POSIX_C_SOURCE 200809L
 #include <unistd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -16,9 +5,7 @@
 #include <pthread.h>
 #include <errno.h>
 #include <time.h>
-#if defined(__linux__)
 #include <sys/prctl.h>
-#endif
 
 #include "thpool.h"
 
@@ -319,15 +306,9 @@ static void* thread_do(struct thread* thread_p){
 	/* Set thread name for profiling and debuging */
 	char thread_name[128] = {0};
 	sprintf(thread_name, "thread-pool-%d", thread_p->id);
-
-#if defined(__linux__)
 	/* Use prctl instead to prevent using _GNU_SOURCE flag and implicit declaration */
 	prctl(PR_SET_NAME, thread_name);
-#elif defined(__APPLE__) && defined(__MACH__)
-	pthread_setname_np(thread_name);
-#else
-	err("thread_do(): pthread_setname_np is not supported on this system");
-#endif
+
 
 	/* Assure all threads have been created before starting serving */
 	thpool_* thpool_p = thread_p->thpool_p;
@@ -455,13 +436,6 @@ static void jobqueue_push(jobqueue* jobqueue_p, struct job* newjob){
 }
 
 
-/* Get first job from queue(removes it from queue)
-<<<<<<< HEAD
- *
- * Notice: Caller MUST hold a mutex
-=======
->>>>>>> da2c0fe45e43ce0937f272c8cd2704bdc0afb490
- */
 static struct job* jobqueue_pull(jobqueue* jobqueue_p){
 
 	pthread_mutex_lock(&jobqueue_p->rwmutex);

@@ -1,15 +1,5 @@
-/**********************************
- * @author      Johan Hanssen Seferidis
- * License:     MIT
- *
- **********************************/
-
 #ifndef _THPOOL_
 #define _THPOOL_
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /* =================================== API ======================================= */
 
@@ -178,10 +168,4 @@ void thpool_destroy(threadpool);
  * @return integer       number of threads working
  */
 int thpool_num_threads_working(threadpool);
-
-
-#ifdef __cplusplus
-}
-#endif
-
 #endif
