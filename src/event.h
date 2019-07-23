@@ -7,7 +7,7 @@
 #include <sys/epoll.h>
 #include <openssl/ssl.h>
 #include "buffer.h"
-#include "http.h"
+#include "http_buffer.h"
 //最大同时处理事件数
 #define MAXEVENTS 1024
 

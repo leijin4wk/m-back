@@ -3,10 +3,10 @@
 //
 #include <sys/socket.h>
 #include <http_parser.h>
-#include "../include/http.h"
+#include "http.h"
 #include "dbg.h"
-#include "buffer.h"
 #include "ssl_tool.h"
+#include "http_buffer.h"
 static struct http_request *new_http_request();
 static void delete_http_request(struct http_request *request);
 static struct http_header *new_http_header();
@@ -19,6 +19,9 @@ static  int on_headers_complete(http_parser* parser);
 static int on_header_value(http_parser* parser, const char* at, size_t length);
 static int on_message_complete(http_parser* parser);
 static int on_body(http_parser* parser, const char* at, size_t length);
+
+
+
 
 http_parser_settings parser_set= {
         .on_message_begin = on_message_begin,
@@ -127,4 +130,15 @@ static int on_body(http_parser* parser, const char* at, size_t length) {
 static int on_message_complete(http_parser* parser) {
     log_info("***MESSAGE COMPLETE***");
     return 0;
+}
+struct http_parser* parser_http_request_buffer(struct Buffer *buf){
+    struct http_parser* parser = (http_parser*)malloc(sizeof(http_parser));
+    http_parser_init(parser, HTTP_REQUEST); // 初始化parser为Request类型
+    http_parser_execute(parser, &parser_set, buf->orig, buf->offset);
+    return parser;
+}
+struct Buffer * create_http_response_buffer(struct http_response *http_response){
+    struct Buffer * buffer= new_buffer(MAX_LINE, MAX_RESPONSE_SIZE);
+    //TODO response intto buffer
+    return buffer;
 }

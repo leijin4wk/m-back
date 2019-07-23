@@ -29,7 +29,7 @@ add_subdirectory(web/home)
 ##route 动态库
 add_subdirectory(web/route)
 ##生成可执行代码
-add_executable(m_back ${DIR_SRCS} web/route/route.c)
+add_executable(m_back ${DIR_SRCS})
 
 target_link_libraries(m_back /usr/local/lib/libcjson.so)
 #pthread  posix的线程库
