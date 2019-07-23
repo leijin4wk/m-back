@@ -1,9 +1,0 @@
-{
-  "module_path": "../cmake-build-debug-remote-host/web/home/libhome.so",
-  "api": [
-    {
-      "path": "/home",
-      "request_method": "GET"
-    }
-  ]
-}
