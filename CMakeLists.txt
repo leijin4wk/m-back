@@ -15,7 +15,7 @@ option (DEBUG  "DEBUG" ON)
 if (DEBUG)
     message("DEBUG OPEN")
     add_definitions(-DDEBUG)
-endif ()
+endif()
 ##包含zdb头文件
 include_directories(/usr/include/zdb)
 ##包含libjson-c头文件
