@@ -10,7 +10,9 @@
       "api": [
         {
           "path": "/home",
-          "request_method": "GET"
+          "request_method": "GET",
+          "consumes":"",
+          "produces":""
         }
       ]
     }

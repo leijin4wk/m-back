@@ -5,7 +5,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <stdbool.h>
-#include <cJSON.h>
+#include "cJSON.h"
 #include "ssl_tool.h"
 #include "dbg.h"
 #define ssl_errno_s		ERR_error_string(ERR_get_error(), NULL)

@@ -3,7 +3,7 @@
 //
 
 #include <dlfcn.h>
-#include <cJSON.h>
+#include "cJSON.h"
 #include "map.h"
 #include "dbg.h"
 
