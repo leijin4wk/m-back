@@ -20,7 +20,6 @@ void load_and_init_module(){
         for(int i = 0;i <=arr_size-1;i++) {
             char* module_name= cJSON_GetObjectItem(arr_item, "module_name")->valuestring;
             char* module_path=cJSON_GetObjectItem(arr_item, "module_path")->valuestring;
-            log_info("%s", module_path);
             cJSON *api_array=cJSON_GetObjectItem(arr_item,"api");
             int api_size = cJSON_GetArraySize(api_array);
             load_api_by_json(module_path,api_array,api_size);
