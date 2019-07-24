@@ -22,62 +22,8 @@
 
 #ifndef cJSON__h
 #define cJSON__h
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-#if !defined(__WINDOWS__) && (defined(WIN32) || defined(WIN64) || defined(_MSC_VER) || defined(_WIN32))
-#define __WINDOWS__
-#endif
-
-#ifdef __WINDOWS__
-
-/* When compiling for windows, we specify a specific calling convention to avoid issues where we are being called from a project with a different default calling convention.  For windows you have 3 define options:
-
-CJSON_HIDE_SYMBOLS - Define this in the case where you don't want to ever dllexport symbols
-CJSON_EXPORT_SYMBOLS - Define this on library build when you want to dllexport symbols (default)
-CJSON_IMPORT_SYMBOLS - Define this if you want to dllimport symbol
-
-For *nix builds that support visibility attribute, you can define similar behavior by
-
-setting default visibility to hidden by adding
--fvisibility=hidden (for gcc)
-or
--xldscope=hidden (for sun cc)
-to CFLAGS
-
-then using the CJSON_API_VISIBILITY flag to "export" the same symbols the way CJSON_EXPORT_SYMBOLS does
-
-*/
-
-#define CJSON_CDECL __cdecl
-#define CJSON_STDCALL __stdcall
-
-/* export symbols by default, this is necessary for copy pasting the C and header file */
-#if !defined(CJSON_HIDE_SYMBOLS) && !defined(CJSON_IMPORT_SYMBOLS) && !defined(CJSON_EXPORT_SYMBOLS)
-#define CJSON_EXPORT_SYMBOLS
-#endif
-
-#if defined(CJSON_HIDE_SYMBOLS)
-#define CJSON_PUBLIC(type)   type CJSON_STDCALL
-#elif defined(CJSON_EXPORT_SYMBOLS)
-#define CJSON_PUBLIC(type)   __declspec(dllexport) type CJSON_STDCALL
-#elif defined(CJSON_IMPORT_SYMBOLS)
-#define CJSON_PUBLIC(type)   __declspec(dllimport) type CJSON_STDCALL
-#endif
-#else /* !__WINDOWS__ */
 #define CJSON_CDECL
-#define CJSON_STDCALL
-
-#if (defined(__GNUC__) || defined(__SUNPRO_CC) || defined (__SUNPRO_C)) && defined(CJSON_API_VISIBILITY)
-#define CJSON_PUBLIC(type)   __attribute__((visibility("default"))) type
-#else
 #define CJSON_PUBLIC(type) type
-#endif
-#endif
-
 /* project version */
 #define CJSON_VERSION_MAJOR 1
 #define CJSON_VERSION_MINOR 7
@@ -133,9 +79,7 @@ typedef int cJSON_bool;
 
 /* Limits how deeply nested arrays/objects can be before cJSON rejects to parse them.
  * This is to prevent stack overflows. */
-#ifndef CJSON_NESTING_LIMIT
 #define CJSON_NESTING_LIMIT 1000
-#endif
 
 /* returns the version of cJSON as a string */
 CJSON_PUBLIC(const char*) cJSON_Version(void);
@@ -277,9 +221,5 @@ CJSON_PUBLIC(double) cJSON_SetNumberHelper(cJSON *object, double number);
 /* malloc/free objects using the malloc/free functions that have been set with cJSON_InitHooks */
 CJSON_PUBLIC(void *) cJSON_malloc(size_t size);
 CJSON_PUBLIC(void) cJSON_free(void *object);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

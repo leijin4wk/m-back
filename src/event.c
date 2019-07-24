@@ -105,7 +105,7 @@ static void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
     memset(&in_addr, 0, sizeof(struct sockaddr_in));
     int in_fd;
     while(1) {
-        in_fd = accept(watcher->event_fd, &in_addr, &in_len);
+        in_fd = accept(watcher->event_fd, (struct sockaddr*)&in_addr, &in_len);
         if (in_fd < 0) {
             if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
                 /* we have processed all incoming connections */

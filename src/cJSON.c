@@ -23,49 +23,23 @@
 /* cJSON */
 /* JSON parser in C. */
 
-/* disable warnings about old C89 functions in MSVC */
-#if !defined(_CRT_SECURE_NO_DEPRECATE) && defined(_MSC_VER)
-#define _CRT_SECURE_NO_DEPRECATE
-#endif
-
-#ifdef __GNUC__
-#pragma GCC visibility push(default)
-#endif
-#if defined(_MSC_VER)
-#pragma warning (push)
-/* disable warning about single line comments in system headers */
-#pragma warning (disable : 4001)
-#endif
-
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
-#include <limits.h>
 #include <ctype.h>
-
-#ifdef ENABLE_LOCALES
 #include <locale.h>
-#endif
 
-#if defined(_MSC_VER)
-#pragma warning (pop)
-#endif
-#ifdef __GNUC__
-#pragma GCC visibility pop
-#endif
 
 #include "cJSON.h"
 
 /* define our own boolean type */
-#ifdef true
-#undef true
-#endif
+#  define INT_MAX	2147483647
+
+#  define INT_MIN	(-INT_MAX - 1)
+
 #define true ((cJSON_bool)1)
 
-#ifdef false
-#undef false
-#endif
 #define false ((cJSON_bool)0)
 
 typedef struct {
@@ -87,10 +61,6 @@ CJSON_PUBLIC(char *) cJSON_GetStringValue(cJSON *item) {
     return item->valuestring;
 }
 
-/* This is a safeguard to prevent copy-pasters from using incompatible C and header files */
-#if (CJSON_VERSION_MAJOR != 1) || (CJSON_VERSION_MINOR != 7) || (CJSON_VERSION_PATCH != 12)
-    #error cJSON.h and cJSON.c have different versions. Make sure that both have the same.
-#endif
 
 CJSON_PUBLIC(const char*) cJSON_Version(void)
 {
@@ -131,25 +101,9 @@ typedef struct internal_hooks
     void *(CJSON_CDECL *reallocate)(void *pointer, size_t size);
 } internal_hooks;
 
-#if defined(_MSC_VER)
-/* work around MSVC error C2322: '...' address of dillimport '...' is not static */
-static void * CJSON_CDECL internal_malloc(size_t size)
-{
-    return malloc(size);
-}
-static void CJSON_CDECL internal_free(void *pointer)
-{
-    free(pointer);
-}
-static void * CJSON_CDECL internal_realloc(void *pointer, size_t size)
-{
-    return realloc(pointer, size);
-}
-#else
 #define internal_malloc malloc
 #define internal_free free
 #define internal_realloc realloc
-#endif
 
 /* strlen of character literals resolved at compile time */
 #define static_strlen(string_literal) (sizeof(string_literal) - sizeof(""))
@@ -247,12 +201,8 @@ CJSON_PUBLIC(void) cJSON_Delete(cJSON *item)
 /* get the decimal point character of the current locale */
 static unsigned char get_decimal_point(void)
 {
-#ifdef ENABLE_LOCALES
     struct lconv *lconv = localeconv();
     return (unsigned char) lconv->decimal_point[0];
-#else
-    return '.';
-#endif
 }
 
 typedef struct

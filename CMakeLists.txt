@@ -4,8 +4,6 @@ project(m_back C)
 set(CMAKE_C_STANDARD 99)
 
 MESSAGE(STATUS "Current Operation System Name:${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR}")
-
-add_definitions(-D_GNU_SOURCE)
 #条件编译
 option (DEBUG  "DEBUG" ON)
 if (DEBUG)
