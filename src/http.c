@@ -130,8 +130,6 @@ static int on_url(http_parser* parser, const char* at, size_t length) {
     http_parser_parse_url(at, length,0,http_parser_url);
     struct http_request *request = (struct http_request *) parser->data;
     request->method = parser->method;
-    request->http_major = parser->http_major;
-    request->http_minor = parser->http_minor;
     alloc_cpy(request->url, at, length)
     alloc_cpy(request->path, request->url+http_parser_url->field_data[3].off, http_parser_url->field_data[3].len)
     alloc_cpy(request->query_str, request->url+http_parser_url->field_data[4].off, http_parser_url->field_data[4].len)
@@ -170,6 +168,9 @@ static int set_param_value(struct http_request *request, const char* at, size_t 
     return 0;
 }
 static int on_headers_complete(http_parser* parser) {
+    struct http_request *request = (struct http_request *) parser->data;
+    request->http_major=parser->http_major;
+    request->http_minor=parser->http_minor;
     log_info("***HEADERS COMPLETE***");
     return 0;
 }
@@ -184,6 +185,10 @@ static int on_message_complete(http_parser* parser) {
 }
 static int parser_query_param(struct http_request *request,const char *buf, size_t buflen) {
     char* p=malloc(buflen + 1);
+    if(p==NULL){
+        log_err("query_param tmp malloc fail!");
+        return -1;
+    }
     char *tmp=p;
     memcpy(p, "&", 1);
     memcpy(p+1,buf,buflen);
