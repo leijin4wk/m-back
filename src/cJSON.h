@@ -44,7 +44,9 @@
 
 #define cJSON_IsReference 256
 #define cJSON_StringIsConst 512
-
+/* Limits how deeply nested arrays/objects can be before cJSON rejects to parse them.
+ * This is to prevent stack overflows. */
+#define CJSON_NESTING_LIMIT 1000
 /* The cJSON structure: */
 typedef struct cJSON
 {
@@ -76,10 +78,6 @@ typedef struct cJSON_Hooks
 } cJSON_Hooks;
 
 typedef int cJSON_bool;
-
-/* Limits how deeply nested arrays/objects can be before cJSON rejects to parse them.
- * This is to prevent stack overflows. */
-#define CJSON_NESTING_LIMIT 1000
 
 /* returns the version of cJSON as a string */
 CJSON_PUBLIC(const char*) cJSON_Version(void);
