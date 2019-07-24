@@ -30,7 +30,7 @@ struct http_request {
     char *method;
     char *url;
     char *query_str;
-    struct http_param *param;
+    struct http_param *query_param;
     char *body;
     unsigned int flags;
     unsigned short http_major, http_minor;

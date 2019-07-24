@@ -40,6 +40,8 @@ struct http_request *new_http_request() {
     request->headers = NULL;
     request->url = NULL;
     request->body = NULL;
+    request->query_str= NULL;
+    request->query_param=NULL;
     request->flags = 0;
     request->http_major = 0;
     request->http_minor = 0;
