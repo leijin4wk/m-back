@@ -13,6 +13,7 @@ void read_json_config(const char * json_config_name){
         log_err("config file read fail!");
         exit(-1);
     }
+    buffer_add(buffer,"\0",1);
     json_config = cJSON_Parse(buffer->orig);
     if (json_config == NULL) {
         log_err("config json Parse error...");

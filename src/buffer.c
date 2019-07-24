@@ -110,7 +110,6 @@ struct Buffer *read_file_to_buffer(const char* file_name){
     while((res=read(fd,buff,MAX_LINE))!=0) {
         buffer_add(file_buffer,buff,res);
     }
-    buffer_add(file_buffer,"\0",1);
     close(fd);
     return file_buffer;
 }

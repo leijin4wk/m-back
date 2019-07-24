@@ -27,8 +27,10 @@ struct http_param{
 };
 // HTTP请求的结构提
 struct http_request {
-    char *method;
+
     char *url;
+    int method;
+    char *path;
     char *query_str;
     struct http_param *query_param;
     char *body;
