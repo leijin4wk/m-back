@@ -12,7 +12,8 @@
           "path": "/home",
           "request_method": "GET",
           "consumes":"",
-          "produces":""
+          "produces":"",
+          "function": ""
         }
       ]
     }
