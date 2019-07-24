@@ -1,7 +1,6 @@
 {
   "db_url": "mysql://localhost:3306/m_back?user=root&password=root",
   "port": 443,
-  "ssl": true,
   "cert_file": "../server.pem",
   "key_file": "../server.key",
   "module": [
