@@ -5,8 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "http.h"
-
 struct Buffer {
     char *data;
     char *orig;

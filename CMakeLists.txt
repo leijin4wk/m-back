@@ -21,7 +21,7 @@ add_subdirectory(web/home)
 ##route 动态库
 add_subdirectory(web/route)
 ##生成可执行代码
-add_executable(m_back ${DIR_SRCS})
+add_executable(m_back ${DIR_SRCS} src/server_process.h src/server_process.c)
 #pthread  posix的线程库
 target_link_libraries(m_back pthread)
 #zdb  数据库连接池库

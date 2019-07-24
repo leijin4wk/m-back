@@ -3,7 +3,6 @@
 //
 #include <sys/socket.h>
 #include "http_parser.h"
-#include "http.h"
 #include "dbg.h"
 #include "ssl_tool.h"
 #include "http_buffer.h"
