@@ -39,6 +39,9 @@ struct http_request {
 };
 
 struct http_response {
+    unsigned int code;
+    char* status;
+    unsigned short http_major, http_minor;
     struct http_header *headers;
     char *body;
 };
