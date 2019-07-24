@@ -4,7 +4,6 @@
 #include <resolv.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-#include <stdbool.h>
 #include "cJSON.h"
 #include "ssl_tool.h"
 #include "dbg.h"
@@ -92,7 +91,7 @@ SSL * create_ssl(int event_fd){
 
  int ssl_read(SSL *ssl,struct Buffer *read_buff) {
      int res = 0;
-     while (true) {
+     while (1) {
          res= buffer_read_tls(ssl,read_buff);
          if(res==0){
              continue;
@@ -140,7 +139,7 @@ static int buffer_read_tls(SSL *ssl,struct Buffer *read_buff)
 }
 int ssl_write(SSL *ssl,struct Buffer *write_buff){
     int res = 0;
-    while (true) {
+    while (1) {
         res= buffer_write_tls(ssl,write_buff);
         if(res==0){
             continue;

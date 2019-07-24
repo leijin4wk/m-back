@@ -2,7 +2,7 @@
 // Created by oyo on 2019-06-28.
 //
 #include <sys/socket.h>
-#include <http_parser.h>
+#include "http_parser.h"
 #include "http.h"
 #include "dbg.h"
 #include "ssl_tool.h"
@@ -93,7 +93,11 @@ static int on_message_begin(http_parser* parser) {
 }
 
 static int on_url(http_parser* parser, const char* at, size_t length) {
-    printf("Url: %.*s", (int)length, at);
+    log_info("Url: %.*s", (int)length, at);
+    struct http_parser_url* httpParserUrl=malloc(sizeof(struct http_parser_url));
+    int http_parser_parse_url(at, length,
+                              1,
+                              httpParserUrl);
     struct http_request *request = (struct http_request *) parser->data;
     request->method = (char *)http_method_str(parser->method);
     request->http_major = parser->http_major;
