@@ -20,10 +20,17 @@ struct http_header {
     char *value;
     struct http_header *next;
 };
+struct http_param{
+    char *name;
+    char *value;
+    struct http_param *next;
+};
 // HTTP请求的结构提
 struct http_request {
     char *method;
     char *url;
+    char *query_str;
+    struct http_param *param;
     char *body;
     unsigned int flags;
     unsigned short http_major, http_minor;

@@ -95,9 +95,8 @@ static int on_message_begin(http_parser* parser) {
 static int on_url(http_parser* parser, const char* at, size_t length) {
     log_info("Url: %.*s", (int)length, at);
     struct http_parser_url* httpParserUrl=malloc(sizeof(struct http_parser_url));
-    int http_parser_parse_url(at, length,
-                              1,
-                              httpParserUrl);
+    http_parser_url_init(httpParserUrl);
+    http_parser_parse_url(at, length,0,httpParserUrl);
     struct http_request *request = (struct http_request *) parser->data;
     request->method = (char *)http_method_str(parser->method);
     request->http_major = parser->http_major;
