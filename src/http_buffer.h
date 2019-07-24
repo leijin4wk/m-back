@@ -9,6 +9,6 @@
     dest = malloc(len + 1);\
     memcpy(dest, src, len);\
     dest[len] = '\0';
-struct http_parser* parser_http_request_buffer(struct Buffer *buf);
+struct http_request* parser_http_request_buffer(struct Buffer *buf);
 struct Buffer *create_http_response_buffer(struct http_response *http_response);
 #endif //M_BACK_HTTP_BUFFER_H

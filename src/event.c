@@ -154,8 +154,8 @@ static void ev_read_callback(int e_pool_fd,struct m_event* watcher){
         return;
     }
     client->request_data=read_buff;
-    struct http_parser* http_parser=parser_http_request_buffer(client->request_data);
-    client->request=(struct http_request *)http_parser->data;
+    struct http_request* http_request=parser_http_request_buffer(client->request_data);
+    client->request=http_request;
     log_info("http parser complete!");
 
 }
