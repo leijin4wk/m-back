@@ -70,9 +70,6 @@ void ev_accept_start(int server_fd){
         log_err("accept_fd epoll_add fail!");
     }
 }
-
-
-
 void ev_loop_start(){
     log_info("server loop started.");
     int i,n;
