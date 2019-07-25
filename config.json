@@ -13,7 +13,7 @@
           "request_method": "GET",
           "consumes":"",
           "produces":"",
-          "function": ""
+          "function": "home_index"
         }
       ]
     }

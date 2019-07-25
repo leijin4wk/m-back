@@ -8,9 +8,13 @@
 #include "ssl_tool.h"
 #include "socket_tool.h"
 #include "dbg.h"
+#include "map.h"
+#include "module.h"
 
 int total_clients=0;
 
+extern map_void_t dispatcher_map;
+static void process_http(int e_pool_fd,struct http_client* client);
 void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
 {
     struct sockaddr_in in_addr;
@@ -69,7 +73,7 @@ void ev_read_callback(int e_pool_fd,struct m_event* watcher){
     client->request_data=read_buff;
     client->request=parser_http_request_buffer(client->request_data);
     log_info("http parser complete!");
-
+    process_http(e_pool_fd,client);
 }
 
 void ev_write_callback(int e_pool_fd,struct m_event* watcher){
@@ -100,5 +104,16 @@ struct http_client* new_http_client(){
 
 void free_http_client(struct http_client* client){
     //todo
+}
+
+static void process_http(int e_pool_fd,struct http_client* client){
+    void (*function)(struct http_request*,struct http_response*);
+    client->response=malloc(sizeof(struct http_response));
+    client->response->http_major=client->request->http_major;
+    client->response->http_minor=client->request->http_minor;
+    log_info("%s",client->request->path);
+    struct http_module_api* api=*(map_get(&dispatcher_map, client->request->path));
+    function=api->function;
+    function(client->request, client->response);
 }
 
