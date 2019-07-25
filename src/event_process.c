@@ -110,6 +110,7 @@ void free_http_client(struct http_client* client){
 }
 static struct http_response *new_http_response(struct http_request* request){
     struct http_response* response=malloc(sizeof(struct http_response));
+    response->body=NULL;
     response->http_major=request->http_major;
     response->http_minor=request->http_minor;
     struct http_header* header= add_http_response_header(response);
@@ -124,6 +125,13 @@ static void process_http(int e_pool_fd,struct http_client* client){
     function=api->function;
     function(client->request, client->response);
     client->response_data=create_http_response_buffer(client->response);
-    //TODO 创建可写事件放入epool
+    struct epoll_event event;
+    event.data.ptr = (void *) client;
+    event.events = EPOLLOUT | EPOLLET | EPOLLONESHOT;
+    int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
+    if (rc != 0) {
+        log_err("epoll_add fail!");
+        free_http_client(client);
+    }
 }
 

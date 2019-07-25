@@ -33,6 +33,7 @@ struct http_request {
     char *query_str;
     struct http_param *query_param;
     char *body;
+    //Transfer-Encoding等判断
     unsigned int flags;
     unsigned short http_major, http_minor;
     struct http_header *headers;
@@ -42,7 +43,6 @@ struct http_request {
 struct http_response {
     unsigned short http_major, http_minor;
     unsigned int code;
-    char* status;
     struct http_header *headers;
     char *body;
 };

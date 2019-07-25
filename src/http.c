@@ -245,6 +245,19 @@ struct Buffer * create_http_response_buffer(struct http_response *http_response)
     char *str_status=http_status_str(status);
     buffer_add(buffer,str_status,strlen(str_status));
     buffer_add(buffer,"\r\n",2);
+    struct http_header *header = http_response->headers;
+    while (header!= NULL) {
+        buffer_add(buffer,header->name,strlen(header->name));
+        buffer_add(buffer,": ",2);
+        buffer_add(buffer,header->value,strlen(header->value));
+        buffer_add(buffer,"\r\n",2);
+        header = header->next;
+
+    }
+    buffer_add(buffer,"\r\n",2);
+    if(http_response->body!=NULL) {
+        buffer_add(buffer, http_response->body, strlen(http_response->body));
+    }
     return buffer;
 }
 struct http_header *add_http_response_header(struct http_response *response){
