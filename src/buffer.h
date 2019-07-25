@@ -14,7 +14,7 @@ struct Buffer {
     size_t length;
     size_t capacity;
 };
-
+#define MAX_READLINE 4096
 struct Buffer *new_buffer(size_t length, size_t capacity);
 void free_buffer(struct Buffer *buf);
 void buffer_reset(struct Buffer *buf);

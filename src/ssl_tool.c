@@ -106,9 +106,9 @@ SSL * create_ssl(int event_fd){
 static int buffer_read_tls(SSL *ssl,struct Buffer *read_buff)
 {
     int		r;
-    char buff[MAX_LINE];
+    char buff[MAX_READLINE];
     ERR_clear_error();
-    r = SSL_read(ssl, buff, MAX_LINE);
+    r = SSL_read(ssl, buff, MAX_READLINE);
     if (r <= 0) {
         r = SSL_get_error(ssl, r);
         switch (r) {

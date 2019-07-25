@@ -1,8 +1,8 @@
 #include <fcntl.h>
-#include <zconf.h>
+#include<unistd.h>
 #include "buffer.h"
 #include "dbg.h"
-#define MAX_READLINE 4096
+
 struct Buffer *new_buffer(size_t length, size_t capacity)
 {
     struct Buffer *buf;

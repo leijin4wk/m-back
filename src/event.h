@@ -29,5 +29,4 @@ struct http_client{
 void ev_loop_init();
 void ev_accept_start(int server_fd);
 void ev_loop_start();
-int process(struct http_client *client);
 #endif //M_BACK_EVENT_H
