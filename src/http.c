@@ -222,6 +222,6 @@ struct http_request* parser_http_request_buffer(struct Buffer *buf){
 }
 struct Buffer * create_http_response_buffer(struct http_response *http_response){
     struct Buffer * buffer= new_buffer(MAX_LINE, MAX_RESPONSE_SIZE);
-    //TODO response intto buffer
+    buffer_add(buffer,"",1);
     return buffer;
 }

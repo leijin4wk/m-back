@@ -10,6 +10,7 @@
 #include "dbg.h"
 #include "map.h"
 #include "module.h"
+#include "http_buffer.h"
 
 int total_clients=0;
 
@@ -115,5 +116,7 @@ static void process_http(int e_pool_fd,struct http_client* client){
     struct http_module_api* api=*(map_get(&dispatcher_map, client->request->path));
     function=api->function;
     function(client->request, client->response);
+    client->response_data=create_http_response_buffer(client->response);
+    //TODO 创建可写事件放入epool
 }
 
