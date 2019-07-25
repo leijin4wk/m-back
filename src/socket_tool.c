@@ -25,6 +25,12 @@
      addr.sin_family=AF_INET;
      addr.sin_port=htons(port);
      addr.sin_addr.s_addr=INADDR_ANY;
+     int flag = 1;
+     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag)) < 0)
+     {
+         printf("socket setsockopt error=%d(%s)!!!\n", errno, strerror(errno));
+         exit(1);
+     }
      if(bind(server_fd,(struct sockaddr*)&addr,sizeof(addr))!=0){
          log_err("bind error");
          return -1;

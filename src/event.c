@@ -83,8 +83,7 @@ void ev_loop_start(){
                 ev_accept_callback(e_pool_fd,r);
             }else{
                 if ((events[i].events & EPOLLERR) ||
-                    (events[i].events & EPOLLHUP) ||
-                    (!(events[i].events & EPOLLIN))) {
+                    (events[i].events & EPOLLHUP)) {
                     log_err("epoll error fd: %d", r->event_fd);
                     close(r->event_fd);
                     free(r);

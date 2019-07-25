@@ -89,6 +89,7 @@ void ev_write_callback(int e_pool_fd,struct m_event* watcher){
         return;
     }
     log_info("http send complete!");
+    SSL_shutdown(client->ssl);
 }
 
 struct http_client* new_http_client(){
@@ -113,9 +114,12 @@ static struct http_response *new_http_response(struct http_request* request){
     response->body=NULL;
     response->http_major=request->http_major;
     response->http_minor=request->http_minor;
+    response->code=200;
+    response->headers=NULL;
     struct http_header* header= add_http_response_header(response);
     header->name="Server";
     header->value="leijin/m_back";
+    return response;
 }
 static void process_http(int e_pool_fd,struct http_client* client){
     void (*function)(struct http_request*,struct http_response*);
@@ -124,14 +128,18 @@ static void process_http(int e_pool_fd,struct http_client* client){
     struct http_module_api* api=*(map_get(&dispatcher_map, client->request->path));
     function=api->function;
     function(client->request, client->response);
-    client->response_data=create_http_response_buffer(client->response);
     struct epoll_event event;
     event.data.ptr = (void *) client;
     event.events = EPOLLOUT | EPOLLET | EPOLLONESHOT;
-    int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
+    int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
     if (rc != 0) {
         log_err("epoll_write add fail!");
+        rc= epoll_ctl(e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
+        if (rc != 0) {
+            log_err("epoll_write MOD fail!");
+        }
         free_http_client(client);
     }
+    log_info("epoll_write add success!");
 }
 
