@@ -1,43 +1,18 @@
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include "str_tool.h"
 
-int
-str_split (const char *str, char *parts[], const char *delimiter) {
-  char *pch;
-  int i = 0;
-  char *copy = NULL, *tmp = NULL;
-
-  copy = strdup(str);
-  if (! copy)
-    goto bad;
-
-  pch = strtok(copy, delimiter);
-
-  tmp = strdup(pch);
-  if (! tmp)
-    goto bad;
-
-  parts[i++] = tmp;
-
-  while (pch) {
-    pch = strtok(NULL, delimiter);
-    if (NULL == pch) break;
-
-    tmp = strdup(pch);
-    if (! tmp)
-      goto bad;
-
-    parts[i++] = tmp;
-  }
-
-  free(copy);
-  return i;
-
- bad:
-  free(copy);
-  for (int j = 0; j < i; j++)
-    free(parts[j]);
-  return -1;
+int int_to_str(int i,char **out){
+    int j=1;
+    int tmp=i;
+    while((tmp=tmp/10)>1){
+      j++;
+    }
+    char* res=malloc(j+1);
+    sprintf(res,"%d",i);
+    res[j]='\0';
+    *out=res;
+    return res;
 }

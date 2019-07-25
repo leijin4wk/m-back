@@ -2,6 +2,7 @@
 // Created by oyo on 2019-06-28.
 //
 #include <sys/socket.h>
+#include <stdlib.h>
 #include "http_parser.h"
 #include "dbg.h"
 #include "ssl_tool.h"
@@ -222,6 +223,29 @@ struct http_request* parser_http_request_buffer(struct Buffer *buf){
 }
 struct Buffer * create_http_response_buffer(struct http_response *http_response){
     struct Buffer * buffer= new_buffer(MAX_LINE, MAX_RESPONSE_SIZE);
-    buffer_add(buffer,"",1);
+    buffer_add(buffer,"HTTP/",5);
+    char*str_major;
+    int res=0;
+    res=int_to_str(http_response->http_major,&str_major);
+    buffer_add(buffer,str_major,res);
+    free(str_major);
+    buffer_add(buffer,".",1);
+    char*str_minor;
+    res=int_to_str(http_response->http_minor,str_minor);
+    buffer_add(buffer,str_minor,res);
+    free(str_minor);
+    buffer_add(buffer," ",1);
+    char*str_code;
+    res=int_to_str(http_response->code,str_code);
+    buffer_add(buffer,str_code,res);
+    free(str_code);
+    buffer_add(buffer," ",1);
+    enum http_status status;
+    status =(enum http_status)http_response->code;
+    char *str_status=http_status_str(status);
+    buffer_add(buffer,str_status,strlen(str_status));
+    buffer_add(buffer,"\r\n",2);
+
+
     return buffer;
 }
