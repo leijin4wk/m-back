@@ -18,7 +18,7 @@ struct Buffer {
 struct Buffer *new_buffer(size_t length, size_t capacity);
 void free_buffer(struct Buffer *buf);
 void buffer_reset(struct Buffer *buf);
-int buffer_add(struct Buffer *buf, void *source, size_t length);
+int buffer_add(struct Buffer *buf, const void *source, size_t length);
 void buffer_drain(struct Buffer *buf, size_t length);
 int buffer_expand(struct Buffer *buf, size_t need);
 struct Buffer *read_file_to_buffer(const char* file_name);

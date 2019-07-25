@@ -14,5 +14,5 @@ int int_to_str(int i,char **out){
     sprintf(res,"%d",i);
     res[j]='\0';
     *out=res;
-    return res;
+    return j;
 }

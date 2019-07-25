@@ -56,7 +56,7 @@ void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
         event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
         int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, in_fd, &event);
         if (rc != 0) {
-            log_err("epoll_add fail!");
+            log_err("epoll_read add fail!");
             free_http_client(client);
             continue;
         }
@@ -130,7 +130,7 @@ static void process_http(int e_pool_fd,struct http_client* client){
     event.events = EPOLLOUT | EPOLLET | EPOLLONESHOT;
     int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
     if (rc != 0) {
-        log_err("epoll_add fail!");
+        log_err("epoll_write add fail!");
         free_http_client(client);
     }
 }
