@@ -46,4 +46,5 @@ struct http_response {
     struct http_header *headers;
     char *body;
 };
+struct http_header *add_http_response_header(struct http_response *response);
 #endif //M_BACK_HTTP_BUFFER_H

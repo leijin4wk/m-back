@@ -112,7 +112,9 @@ static struct http_response *new_http_response(struct http_request* request){
     struct http_response* response=malloc(sizeof(struct http_response));
     response->http_major=request->http_major;
     response->http_minor=request->http_minor;
-
+    struct http_header* header= add_http_response_header(response);
+    header->name="Server";
+    header->value="leijin/m_back";
 }
 static void process_http(int e_pool_fd,struct http_client* client){
     void (*function)(struct http_request*,struct http_response*);

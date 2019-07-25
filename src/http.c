@@ -12,12 +12,12 @@ static struct http_request *new_http_request();
 static void delete_http_request(struct http_request *request);
 static struct http_header *new_http_header();
 static void delete_http_header(struct http_header *header);
-static inline struct http_header *add_http_header(struct http_request *request);
+static inline struct http_header *add_http_request_header(struct http_request *request);
 static int on_message_begin(http_parser* parser);
 static int on_url(http_parser* parser, const char* at, size_t length);
-static int on_header_field(http_parser* parser, const char* at, size_t length);
+static int on_header_request_field(http_parser* parser, const char* at, size_t length);
 static  int on_headers_complete(http_parser* parser);
-static int on_header_value(http_parser* parser, const char* at, size_t length);
+static int on_header_request_value(http_parser* parser, const char* at, size_t length);
 static int on_message_complete(http_parser* parser);
 static int on_body(http_parser* parser, const char* at, size_t length);
 static int parser_query_param(struct http_request *request,const char *buf, size_t buf_len) ;
@@ -25,8 +25,8 @@ static int set_param_field(struct http_request *request, const char* at, size_t 
 static int set_param_value(struct http_request *request, const char* at, size_t length);
 http_parser_settings parser_set= {
         .on_message_begin = on_message_begin,
-        .on_header_field = on_header_field,
-        .on_header_value = on_header_value,
+        .on_header_field = on_header_request_field,
+        .on_header_value = on_header_request_value,
         .on_url = on_url,
         .on_body = on_body,
         .on_headers_complete = on_headers_complete,
@@ -90,7 +90,7 @@ static void delete_http_param(struct http_param *param) {
 }
 // 将一个空的HTTP头部字段附件到字段链表的尾部
 // 返回值为创建的新节点
-static struct http_header *add_http_header(struct http_request *request) {
+static struct http_header *add_http_request_header(struct http_request *request) {
     struct http_header *header = request->headers;
     while (header != NULL) {
         if (header->next == NULL) {
@@ -138,9 +138,9 @@ static int on_url(http_parser* parser, const char* at, size_t length) {
     return 0;
 }
 
-static int on_header_field(http_parser* parser, const char* at, size_t length) {
+static int on_header_request_field(http_parser* parser, const char* at, size_t length) {
     struct http_request *request = (struct http_request *) parser->data;
-    struct http_header *header = add_http_header(request);
+    struct http_header *header = add_http_request_header(request);
     alloc_cpy(header->name, at, length)
     return 0;
 }
@@ -150,7 +150,7 @@ static int set_param_field(struct http_request *request, const char* at, size_t 
     alloc_cpy(param->name, at, length)
     return 0;
 }
-static int on_header_value(http_parser* parser, const char* at, size_t length) {
+static int on_header_request_value(http_parser* parser, const char* at, size_t length) {
     struct http_request *request = (struct http_request *) parser->data;
     struct http_header *header = request->headers;
     while (header->next != NULL) {
@@ -245,7 +245,17 @@ struct Buffer * create_http_response_buffer(struct http_response *http_response)
     char *str_status=http_status_str(status);
     buffer_add(buffer,str_status,strlen(str_status));
     buffer_add(buffer,"\r\n",2);
-
-
     return buffer;
+}
+struct http_header *add_http_response_header(struct http_response *response){
+    struct http_header *header = response->headers;
+    while (header != NULL) {
+        if (header->next == NULL) {
+            header->next = new_http_header();
+            return header->next;
+        }
+        header = header->next;
+    }
+    response->headers = new_http_header();
+    return response->headers;
 }
