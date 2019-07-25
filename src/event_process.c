@@ -15,6 +15,8 @@
 int total_clients=0;
 
 extern map_void_t dispatcher_map;
+
+static struct http_response *new_http_response();
 static void process_http(int e_pool_fd,struct http_client* client);
 void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
 {
@@ -106,12 +108,15 @@ struct http_client* new_http_client(){
 void free_http_client(struct http_client* client){
     //todo
 }
+static struct http_response *new_http_response(struct http_request* request){
+    struct http_response* response=malloc(sizeof(struct http_response));
+    response->http_major=request->http_major;
+    response->http_minor=request->http_minor;
 
+}
 static void process_http(int e_pool_fd,struct http_client* client){
     void (*function)(struct http_request*,struct http_response*);
-    client->response=malloc(sizeof(struct http_response));
-    client->response->http_major=client->request->http_major;
-    client->response->http_minor=client->request->http_minor;
+    client->response=new_http_response(client->request);
     log_info("%s",client->request->path);
     struct http_module_api* api=*(map_get(&dispatcher_map, client->request->path));
     function=api->function;
