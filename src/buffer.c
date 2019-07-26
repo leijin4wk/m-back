@@ -113,3 +113,10 @@ struct Buffer *read_file_to_buffer(const char* file_name){
     close(fd);
     return file_buffer;
 }
+
+char* buffer_to_string(struct Buffer *buf){
+    char* res=malloc(buf->offset+1);
+    memcpy(res,buf->orig,buf->offset);
+    res[buf->offset]='\0';
+    return res;
+}

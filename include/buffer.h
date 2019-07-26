@@ -22,4 +22,5 @@ int buffer_add(struct Buffer *buf, const void *source, size_t length);
 void buffer_drain(struct Buffer *buf, size_t length);
 int buffer_expand(struct Buffer *buf, size_t need);
 struct Buffer *read_file_to_buffer(const char* file_name);
+char* buffer_to_string(struct Buffer *buf);
 #endif

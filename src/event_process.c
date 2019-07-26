@@ -3,6 +3,7 @@
 //
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <string.h>
 #include "event_process.h"
 #include "event.h"
 #include "ssl_tool.h"
@@ -11,7 +12,7 @@
 #include "map.h"
 #include "module.h"
 #include "http_buffer.h"
-
+#include "str_tool.h"
 int total_clients=0;
 
 extern map_void_t dispatcher_map;
@@ -82,6 +83,12 @@ void ev_read_callback(int e_pool_fd,struct m_event* watcher){
 void ev_write_callback(int e_pool_fd,struct m_event* watcher){
     int res=0;
     struct http_client* client= (struct http_client *)watcher;
+    struct http_header* header=add_http_response_header(client->response);
+    header->name=strdup("Content-Length");
+    log_info("%d",strlen(client->response->body));
+    char* length=NULL;
+    int_to_str(strlen(client->response->body),&length);
+    header->value=length;
     struct Buffer* read_buff=create_http_response_buffer(client->response);
     res=ssl_write(client->ssl,read_buff);
     if(res<0){
@@ -117,8 +124,8 @@ static struct http_response *new_http_response(struct http_request* request){
     response->code=200;
     response->headers=NULL;
     struct http_header* header= add_http_response_header(response);
-    header->name="Server";
-    header->value="leijin/m_back";
+    header->name=strdup("Server");
+    header->value=strdup("LeiJin/m_back");
     return response;
 }
 static void process_http(int e_pool_fd,struct http_client* client){

@@ -7,7 +7,7 @@
 int int_to_str(int i,char **out){
     int j=1;
     int tmp=i;
-    while((tmp=tmp/10)>1){
+    while((tmp=tmp/10)>=1){
       j++;
     }
     char* res=malloc(j+1);
