@@ -163,6 +163,11 @@ static void process_http(int e_pool_fd,struct http_client* client){
     void (*function)(struct http_request*,struct http_response*);
     client->response=new_http_response(client->request);
     log_info("%s",client->request->path);
+    if(check_http_request_header_value(client->request,"Upgrade-Insecure-Requests","1")){
+        struct http_header* header= add_http_response_header(client->response);
+        header->name=strdup("Content-Security-Policy");
+        header->value=strdup("upgrade-insecure-requests");
+    }
     void** fun=map_get(&dispatcher_map, client->request->path);
     if(fun==NULL){
         client->response->code=404;

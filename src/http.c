@@ -272,3 +272,18 @@ struct http_header *add_http_response_header(struct http_response *response){
     response->headers = new_http_header();
     return response->headers;
 }
+int check_http_request_header_value(struct http_request *http_request,char * name,char* value){
+    struct http_header *header = http_request->headers;
+    if(header==NULL){
+        return 0;
+    }
+    while (header!= NULL) {
+        if(strcmp(name,header->name)==0){
+            if(strcmp(value,header->value)==0){
+                return 1;
+            }
+        }
+        header = header->next;
+    }
+    return 0;
+}
