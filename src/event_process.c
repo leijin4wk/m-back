@@ -78,7 +78,21 @@ void ev_read_callback(int e_pool_fd,struct m_event* watcher){
     client->request_data=read_buff;
     client->request=parser_http_request_buffer(client->request_data);
     log_info("http parser complete!");
+    //这个是关键方法
     process_http(e_pool_fd,client);
+
+    struct epoll_event event;
+    event.data.ptr = (void *) client;
+    event.events = EPOLLOUT | EPOLLET | EPOLLONESHOT;
+    int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
+    if (rc != 0) {
+        log_info("fd exist in epool!");
+        rc= epoll_ctl(e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
+        if (rc != 0) {
+            log_err("epoll_write MOD fail!");
+            free_http_client(client);
+        }
+    }
 }
 
 void ev_write_callback(int e_pool_fd,struct m_event* watcher){
@@ -87,7 +101,6 @@ void ev_write_callback(int e_pool_fd,struct m_event* watcher){
     struct http_header* header=add_http_response_header(client->response);
     header->name=strdup("Content-Length");
     if(client->response->body!=NULL) {
-        log_info("%d", (int) strlen(client->response->body));
         char *length = NULL;
         int_to_str(strlen(client->response->body), &length);
         header->value = length;
@@ -107,10 +120,11 @@ void ev_write_callback(int e_pool_fd,struct m_event* watcher){
     event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
     int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
     if (rc != 0) {
-        log_err("epoll_write add fail!");
+        log_info("fd exist in epool!");
         rc= epoll_ctl(e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
         if (rc != 0) {
             log_err("epoll_write MOD fail!");
+            free_http_client(client);
         }
     }
     log_info("epoll add read  success!");
@@ -157,18 +171,6 @@ static void process_http(int e_pool_fd,struct http_client* client){
         function = api->function;
         function(client->request, client->response);
     }
-    struct epoll_event event;
-    event.data.ptr = (void *) client;
-    event.events = EPOLLOUT | EPOLLET | EPOLLONESHOT;
-    int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
-    if (rc != 0) {
-        log_err("epoll_write add fail!");
-        rc= epoll_ctl(e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
-        if (rc != 0) {
-            log_err("epoll_write MOD fail!");
-        }
-        free_http_client(client);
-    }
-    log_info("epoll_write add success!");
+
 }
 
