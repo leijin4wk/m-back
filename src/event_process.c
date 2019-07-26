@@ -74,7 +74,7 @@ void ev_read_callback(int e_pool_fd,struct m_event* watcher){
         free_http_client(client);
         return;
     }
-    log_info("http read size %d",read_buff->offset);
+    log_info("http read size %d",(int)read_buff->offset);
     client->request_data=read_buff;
     client->request=parser_http_request_buffer(client->request_data);
     log_info("http parser complete!");
@@ -114,7 +114,7 @@ void ev_write_callback(int e_pool_fd,struct m_event* watcher){
         free_http_client(client);
         return;
     }
-    log_info("http write size %d",read_buff->offset);
+    log_info("http write size %d",(int)read_buff->offset);
     struct epoll_event event;
     event.data.ptr = (void *) client;
     event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
