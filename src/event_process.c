@@ -28,13 +28,7 @@ void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
     while(1) {
         in_fd = accept(watcher->event_fd, (struct sockaddr*)&in_addr, &in_len);
         if (in_fd < 0) {
-            if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
-                /* we have processed all incoming connections */
-                break;
-            } else {
-                log_err("accept error！");
-                break;
-            }
+            break;
         }
         int flag = set_nonblock(in_fd);
         if (flag < 0) {
@@ -86,10 +80,8 @@ void ev_read_callback(int e_pool_fd,struct m_event* watcher){
     event.events = EPOLLOUT | EPOLLET | EPOLLONESHOT;
     int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
     if (rc != 0) {
-        log_info("fd exist in epool!");
         rc= epoll_ctl(e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
         if (rc != 0) {
-            log_err("epoll_write MOD fail!");
             free_http_client(client);
         }
     }
@@ -120,7 +112,6 @@ void ev_write_callback(int e_pool_fd,struct m_event* watcher){
     event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
     int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
     if (rc != 0) {
-        log_info("fd exist in epool!");
         rc= epoll_ctl(e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
         if (rc != 0) {
             log_err("epoll_write MOD fail!");
@@ -128,6 +119,7 @@ void ev_write_callback(int e_pool_fd,struct m_event* watcher){
         }
     }
     log_info("epoll add read  success!");
+
 }
 
 struct http_client* new_http_client(){

@@ -119,7 +119,6 @@ static struct http_param *add_http_param(struct http_request *request) {
 }
 
 static int on_message_begin(http_parser* parser) {
-    log_info("***MESSAGE BEGIN***");
     parser->data=new_http_request();
     return 0;
 }
@@ -171,7 +170,6 @@ static int on_headers_complete(http_parser* parser) {
     struct http_request *request = (struct http_request *) parser->data;
     request->http_major=parser->http_major;
     request->http_minor=parser->http_minor;
-    log_info("***HEADERS COMPLETE***");
     return 0;
 }
 static int on_body(http_parser* parser, const char* at, size_t length) {
@@ -180,7 +178,7 @@ static int on_body(http_parser* parser, const char* at, size_t length) {
     return 0;
 }
 static int on_message_complete(http_parser* parser) {
-    log_info("***MESSAGE COMPLETE***");
+    log_info("http parser complete");
     return 0;
 }
 static int parser_query_param(struct http_request *request,const char *buf, size_t buflen) {
