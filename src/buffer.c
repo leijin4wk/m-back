@@ -37,9 +37,6 @@ int buffer_expand(struct Buffer *buf, size_t need)
     size_t pos = buf->data - buf->orig;
     size_t expand = 0;
     size_t new_size = 0;
-
-    log_debug("%s: need %lu, pos %lu\n", __FUNCTION__, need, pos);
-    
     if (need <= pos) {
         memmove(buf->orig, buf->data, buf->offset);
         buf->data = buf->orig;
@@ -50,9 +47,6 @@ int buffer_expand(struct Buffer *buf, size_t need)
     while (expand < need) {
         expand = expand * 2;
     }
-
-    log_debug("%s: expanding by %lu\n", __FUNCTION__, expand);
-    
     new_size = buf->length + expand;
     if (buf->capacity > 0 && new_size > buf->capacity) {
         return 0;
@@ -69,9 +63,6 @@ int buffer_add(struct Buffer *buf, const void *source, size_t length)
 {
     size_t used = buf->data - buf->orig + buf->offset;
     int32_t need = used + length - buf->length;
-
-    log_debug("%s: adding %d,used %d,length %d", __FUNCTION__, (int)length, (int)used, (int)buf->length);
-    
     if (need > 0) {
         if (!buffer_expand(buf, need)) {
             return 0;

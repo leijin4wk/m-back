@@ -74,6 +74,7 @@ void ev_read_callback(int e_pool_fd,struct m_event* watcher){
         free_http_client(client);
         return;
     }
+    log_info("http read size %d",read_buff->offset);
     client->request_data=read_buff;
     client->request=parser_http_request_buffer(client->request_data);
     log_info("http parser complete!");
@@ -85,18 +86,34 @@ void ev_write_callback(int e_pool_fd,struct m_event* watcher){
     struct http_client* client= (struct http_client *)watcher;
     struct http_header* header=add_http_response_header(client->response);
     header->name=strdup("Content-Length");
-    log_info("%d",strlen(client->response->body));
-    char* length=NULL;
-    int_to_str(strlen(client->response->body),&length);
-    header->value=length;
+    if(client->response->body!=NULL) {
+        log_info("%d", (int) strlen(client->response->body));
+        char *length = NULL;
+        int_to_str(strlen(client->response->body), &length);
+        header->value = length;
+    }else{
+        header->value =strdup("0");
+    }
+    log_info("http content size %s",header->value);
     struct Buffer* read_buff=create_http_response_buffer(client->response);
     res=ssl_write(client->ssl,read_buff);
     if(res<0){
         free_http_client(client);
         return;
     }
-    log_info("http send complete!");
-    SSL_shutdown(client->ssl);
+    log_info("http write size %d",read_buff->offset);
+    struct epoll_event event;
+    event.data.ptr = (void *) client;
+    event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
+    int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
+    if (rc != 0) {
+        log_err("epoll_write add fail!");
+        rc= epoll_ctl(e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
+        if (rc != 0) {
+            log_err("epoll_write MOD fail!");
+        }
+    }
+    log_info("epoll add read  success!");
 }
 
 struct http_client* new_http_client(){
@@ -132,9 +149,14 @@ static void process_http(int e_pool_fd,struct http_client* client){
     void (*function)(struct http_request*,struct http_response*);
     client->response=new_http_response(client->request);
     log_info("%s",client->request->path);
-    struct http_module_api* api=*(map_get(&dispatcher_map, client->request->path));
-    function=api->function;
-    function(client->request, client->response);
+    void** fun=map_get(&dispatcher_map, client->request->path);
+    if(fun==NULL){
+        client->response->code=404;
+    } else {
+        struct http_module_api* api=(struct http_module_api*)(*fun);
+        function = api->function;
+        function(client->request, client->response);
+    }
     struct epoll_event event;
     event.data.ptr = (void *) client;
     event.events = EPOLLOUT | EPOLLET | EPOLLONESHOT;
