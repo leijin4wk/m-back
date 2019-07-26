@@ -4,7 +4,8 @@ project(m_back C)
 set(CMAKE_C_STANDARD 99)
 
 MESSAGE(STATUS "Current Operation System Name:${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR}")
-
+##显示编译细节信息
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 #条件编译
 option (DEBUG  "DEBUG" ON)
