@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <sys/stat.h>
 #include "event_process.h"
 #include "event.h"
 #include "ssl_tool.h"
@@ -16,7 +17,7 @@
 int total_clients=0;
 
 extern map_void_t dispatcher_map;
-
+extern char* root;
 static struct http_response *new_http_response();
 static void process_http(int e_pool_fd,struct http_client* client);
 void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
@@ -152,7 +153,10 @@ static struct http_response *new_http_response(struct http_request* request){
     return response;
 }
 static void process_http(int e_pool_fd,struct http_client* client){
+    struct stat sbuf;
+    char filename[SHORTLINE];
     void (*function)(struct http_request*,struct http_response*);
+    strcpy(filename, root);
     client->response=new_http_response(client->request);
     log_info("%s",client->request->path);
     if(check_http_request_header_value(client->request,"Upgrade-Insecure-Requests","1")){
@@ -162,7 +166,11 @@ static void process_http(int e_pool_fd,struct http_client* client){
     }
     void** fun=map_get(&dispatcher_map, client->request->path);
     if(fun==NULL){
-        client->response->code=404;
+        strcat(filename,client->request->path);
+        if(stat(filename, &sbuf) < 0) {
+            client->response->code=404;
+        }
+        //此处添加文件回写操作
     } else {
         struct http_module_api* api=(struct http_module_api*)(*fun);
         function = api->function;

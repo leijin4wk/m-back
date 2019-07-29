@@ -7,7 +7,6 @@
 #include "socket_tool.h"
 #include "dbg.h"
  extern cJSON *json_config;
-
  int init_server_socket(void){
      int server_fd;
      cJSON *port_item=cJSON_GetObjectItem(json_config,"port");

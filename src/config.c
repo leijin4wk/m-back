@@ -6,7 +6,7 @@
 #include "dbg.h"
 
 cJSON *json_config;
-
+char* root;
 void read_json_config(const char * json_config_name){
     struct Buffer* buffer=read_file_to_buffer(json_config_name);
     if(buffer==NULL){
@@ -19,5 +19,11 @@ void read_json_config(const char * json_config_name){
         log_err("config json Parse error...");
         exit(-1);
     }
+    cJSON *root_item=cJSON_GetObjectItem(json_config,"root");
+    if(root_item==NULL){
+        log_err("root is not  config!");
+        exit(-1);
+    }
+    root=root_item->valuestring;
 }
 

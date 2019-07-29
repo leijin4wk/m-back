@@ -3,6 +3,7 @@
   "port": 443,
   "cert_file": "../server.pem",
   "key_file": "../server.key",
+  "root": "../root",
   "module": [
     {
       "module_name": "home",

@@ -6,6 +6,7 @@
 #define M_BACK_EVENT_PROCESS_H
 #include "event.h"
 
+#define SHORTLINE   512
 void ev_accept_callback(int e_pool_fd,struct m_event *watcher);
 
 void ev_read_callback(int e_pool_fd,struct m_event* watcher);
