@@ -5,6 +5,9 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/mman.h>
 #include "event_process.h"
 #include "event.h"
 #include "ssl_tool.h"
@@ -15,6 +18,7 @@
 #include "http_buffer.h"
 #include "str_tool.h"
 int total_clients=0;
+
 
 extern map_void_t dispatcher_map;
 extern char* root;
@@ -92,6 +96,15 @@ void ev_write_callback(int e_pool_fd,struct m_event* watcher){
     int res=0;
     struct http_client* client= (struct http_client *)watcher;
     struct http_header* header=add_http_response_header(client->response);
+    if(client->response->data_type==STATIC_DATA) {
+        int src_fd = open(client->response->real_path, O_RDONLY, 0);
+        char *src_addr = mmap(NULL, filesize, PROT_READ, MAP_PRIVATE, src_fd, 0);
+        if (src_addr == (void *) -1){
+            log_err("% mmap error",client->response->real_path);
+        }
+
+        close(src_fd);
+    }
     header->name=strdup("Content-Length");
     if(client->response->body!=NULL) {
         char *length = NULL;
@@ -147,6 +160,8 @@ static struct http_response *new_http_response(struct http_request* request){
     response->http_minor=request->http_minor;
     response->code=200;
     response->headers=NULL;
+    response->real_path=NULL;
+    response->data_type=-1;
     struct http_header* header= add_http_response_header(response);
     header->name=strdup("Server");
     header->value=strdup("LeiJin/m_back");
@@ -154,9 +169,9 @@ static struct http_response *new_http_response(struct http_request* request){
 }
 static void process_http(int e_pool_fd,struct http_client* client){
     struct stat sbuf;
-    char filename[SHORTLINE];
+    struct Buffer* filename=new_buffer(SHORTLINE,SHORTLINE);
     void (*function)(struct http_request*,struct http_response*);
-    strcpy(filename, root);
+    buffer_add(filename,root,strlen(root));
     client->response=new_http_response(client->request);
     log_info("%s",client->request->path);
     if(check_http_request_header_value(client->request,"Upgrade-Insecure-Requests","1")){
@@ -166,16 +181,27 @@ static void process_http(int e_pool_fd,struct http_client* client){
     }
     void** fun=map_get(&dispatcher_map, client->request->path);
     if(fun==NULL){
-        strcat(filename,client->request->path);
-        if(stat(filename, &sbuf) < 0) {
+        client->response->data_type=STATIC_DATA;
+        buffer_add(filename,client->request->path,strlen(client->request->path));
+        log_info("%s",buffer_to_string(filename));
+        int res=stat(buffer_to_string(filename), &sbuf);
+        if(res < 0) {
             client->response->code=404;
+            client->response->data_type=DYNAMIC_DATA;
+            struct Buffer* body=new_buffer(1024,1024);
+            char *message="page not found!";
+            buffer_add(body,message,strlen(message));
+            client->response->body=buffer_to_string(body);
+            free_buffer(body);
+        }else{
+            client->response->real_path=buffer_to_string(filename);
         }
-        //此处添加文件回写操作
     } else {
+        client->response->data_type=DYNAMIC_DATA;
         struct http_module_api* api=(struct http_module_api*)(*fun);
         function = api->function;
         function(client->request, client->response);
     }
-
+    free_buffer(filename);
 }
 

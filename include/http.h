@@ -6,6 +6,10 @@
 #define M_BACK_HTTP_H
 #include <openssl/ssl.h>
 #include <zdb.h>
+//动态数据
+#define DYNAMIC_DATA 0
+//静态数据
+#define STATIC_DATA 1
 
 //http 请求最大长度 2M
 #define MAX_REQUEST_SIZE 2*1024*1024
@@ -44,6 +48,9 @@ struct http_response {
     unsigned short http_major, http_minor;
     unsigned int code;
     struct http_header *headers;
+    int data_type;
+    char* real_path;
+    char* real_file_size;
     char *body;
 };
 struct http_header *add_http_response_header(struct http_response *response);

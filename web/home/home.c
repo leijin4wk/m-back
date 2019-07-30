@@ -20,4 +20,5 @@ void home_index(struct http_request* request,struct http_response* response)
     const char* d="</html>";
     buffer_add(body,d,strlen(d));
     response->body=buffer_to_string(body);
+    free_buffer(body);
 }
