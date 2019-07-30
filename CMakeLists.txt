@@ -26,10 +26,10 @@ include_directories(/usr/include/zdb)
 include_directories(./include)
 # 查找目录下的所有源文件，并将名称保存到 DIR_SRCS 变量
 aux_source_directory(src/ DIR_SRCS)
+##添加apue中简单的数据库
+add_subdirectory(db)
 ##home 动态库
 add_subdirectory(web/home)
-##route 动态库
-add_subdirectory(web/route)
 ##生成可执行代码
 add_executable(m_back ${DIR_SRCS})
 #pthread  posix的线程库
