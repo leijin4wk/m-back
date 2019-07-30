@@ -5,9 +5,6 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/mman.h>
 #include "event_process.h"
 #include "event.h"
 #include "ssl_tool.h"
@@ -68,7 +65,7 @@ void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
 void ev_read_callback(int e_pool_fd,struct m_event* watcher){
     struct http_client* client= (struct http_client *)watcher;
     struct Buffer* read_buff=new_buffer(MAX_LINE, MAX_REQUEST_SIZE);
-    int res=ssl_read(client->ssl,read_buff);
+    int res=ssl_read_buffer(client->ssl,read_buff);
     if(res<0){
         free_http_client(client);
         return;
@@ -96,32 +93,34 @@ void ev_write_callback(int e_pool_fd,struct m_event* watcher){
     int res=0;
     struct http_client* client= (struct http_client *)watcher;
     struct http_header* header=add_http_response_header(client->response);
-    if(client->response->data_type==STATIC_DATA) {
-        int src_fd = open(client->response->real_path, O_RDONLY, 0);
-        char *src_addr = mmap(NULL, filesize, PROT_READ, MAP_PRIVATE, src_fd, 0);
-        if (src_addr == (void *) -1){
-            log_err("% mmap error",client->response->real_path);
-        }
-
-        close(src_fd);
-    }
     header->name=strdup("Content-Length");
-    if(client->response->body!=NULL) {
+    if(client->response->data_type==DYNAMIC_DATA) {
         char *length = NULL;
         int_to_str(strlen(client->response->body), &length);
         header->value = length;
+        log_info("http content size %s",header->value);
+
     }else{
-        header->value =strdup("0");
+        char *length = NULL;
+        int_to_str(client->response->real_file_size, &length);
+        header->value = length;
+        log_info("http write file size %d",(int)client->response->real_file_size);
     }
-    log_info("http content size %s",header->value);
     struct Buffer* read_buff=create_http_response_buffer(client->response);
-    res=ssl_write(client->ssl,read_buff);
+    res=ssl_write_buffer(client->ssl,read_buff);
     if(res<0){
+        log_err("ssl_write_buffer fail!");
         free_http_client(client);
         return;
     }
-
-    log_info("http write size %d",(int)read_buff->offset);
+    if (client->response->data_type==STATIC_DATA){
+        res=ssl_write_file(client->ssl,client->response->real_file_path,client->response->real_file_size);
+        if(res<0){
+            log_err("ssl_write_file fail!");
+            free_http_client(client);
+            return;
+        }
+    }
     struct epoll_event event;
     event.data.ptr = (void *) client;
     event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
@@ -161,7 +160,7 @@ static struct http_response *new_http_response(struct http_request* request){
     response->http_minor=request->http_minor;
     response->code=200;
     response->headers=NULL;
-    response->real_path=NULL;
+    response->real_file_path=NULL;
     response->data_type=-1;
     struct http_header* header= add_http_response_header(response);
     header->name=strdup("Server");
@@ -189,15 +188,23 @@ static void process_http(int e_pool_fd,struct http_client* client){
             client->response->data_type=DYNAMIC_DATA;
             client->response->code=404;
         }else{
-            client->response->data_type=STATIC_DATA;
-            client->response->real_path=buffer_to_string(filename);
-            client->response->real_file_size=sbuf.st_size;
+            if(S_ISREG(sbuf.st_mode)) {
+                client->response->data_type = STATIC_DATA;
+                client->response->real_file_path = buffer_to_string(filename);
+                client->response->real_file_size = sbuf.st_size;
+            }else{
+                client->response->data_type=DYNAMIC_DATA;
+                client->response->code=404;
+            }
         }
     } else {
         client->response->data_type=DYNAMIC_DATA;
         struct http_module_api* api=(struct http_module_api*)(*fun);
         function = api->function;
         function(client->request, client->response);
+    }
+    if(client->response->code!=200){
+        get_error_status_body(client->response,client->response->code);
     }
     free_buffer(filename);
 }

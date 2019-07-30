@@ -13,4 +13,5 @@
 struct http_request* parser_http_request_buffer(struct Buffer *buf);
 struct Buffer *create_http_response_buffer(struct http_response *http_response);
 int check_http_request_header_value(struct http_request *http_request,char * name,char* value);
+void get_error_status_body(struct http_response *http_response,int code);
 #endif //M_BACK_HTTP_BUFFER_H

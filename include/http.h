@@ -49,8 +49,8 @@ struct http_response {
     unsigned int code;
     struct http_header *headers;
     int data_type;
-    char* real_path;
-    char* real_file_size;
+    char* real_file_path;
+    size_t real_file_size;
     char *body;
 };
 struct http_header *add_http_response_header(struct http_response *response);

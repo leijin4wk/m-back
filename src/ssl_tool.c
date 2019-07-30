@@ -4,6 +4,9 @@
 #include <resolv.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/mman.h>
 #include "cJSON.h"
 #include "ssl_tool.h"
 #include "dbg.h"
@@ -89,7 +92,7 @@ SSL * create_ssl(int event_fd){
     return ssl;
 }
 
- int ssl_read(SSL *ssl,struct Buffer *read_buff) {
+ int ssl_read_buffer(SSL *ssl,struct Buffer *read_buff) {
      int res = 0;
      while (1) {
          res= buffer_read_tls(ssl,read_buff);
@@ -137,7 +140,7 @@ static int buffer_read_tls(SSL *ssl,struct Buffer *read_buff)
     }
     return 1;
 }
-int ssl_write(SSL *ssl,struct Buffer *write_buff){
+int ssl_write_buffer(SSL *ssl,struct Buffer *write_buff){
     int res = 0;
     while (1) {
         res= buffer_write_tls(ssl,write_buff);
@@ -181,4 +184,49 @@ static int buffer_write_tls(SSL *ssl,struct Buffer *write_buff){
     }else{
         return 0;
     }
+}
+int ssl_write_file(SSL *ssl,char *file_name,size_t file_size){
+    int src_fd = open(file_name, O_RDONLY, 0);
+    char *src_addr = mmap(NULL, file_size, PROT_READ, MAP_PRIVATE, src_fd, 0);
+    if (src_addr == (void *) -1){
+        log_err("%s mmap error",file_name);
+    }
+    int offset=0;
+    int res = 0;
+    while (1) {
+        if (file_size==offset){
+            break;
+        }
+        res = SSL_write(ssl, src_addr+offset, file_size-offset);
+        if(res>0){
+            offset+=res;
+            continue;
+        }else{
+            res = SSL_get_error(ssl, res);
+            switch (res) {
+                case SSL_ERROR_WANT_READ:
+                case SSL_ERROR_WANT_WRITE:
+                    continue;
+                case SSL_ERROR_SYSCALL:
+                    switch (errno) {
+                        case EINTR:
+                        case EAGAIN:
+                            continue;
+                        default:
+                            close(src_fd);
+                            munmap(src_addr, file_size);
+                            return -1;
+                    }
+                    /* FALLTHROUGH */
+                default:
+                    log_err("SSL_file_write(): %s", ssl_errno_s);
+                    close(src_fd);
+                    munmap(src_addr, file_size);
+                    return -1;
+            }
+        }
+    }
+    munmap(src_addr, file_size);
+    close(src_fd);
+    return 1;
 }
