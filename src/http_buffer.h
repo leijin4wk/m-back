@@ -5,6 +5,7 @@
 #ifndef M_BACK_HTTP_BUFFER_H
 #define M_BACK_HTTP_BUFFER_H
 #include "http.h"
+#include "buffer.h"
 #define alloc_cpy(dest, src, len) \
     dest = malloc(len + 1);\
     memcpy(dest, src, len);\

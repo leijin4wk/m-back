@@ -23,6 +23,7 @@ static int on_body(http_parser* parser, const char* at, size_t length);
 static int parser_query_param(struct http_request *request,const char *buf, size_t buf_len) ;
 static int set_param_field(struct http_request *request, const char* at, size_t length);
 static int set_param_value(struct http_request *request, const char* at, size_t length);
+static void get_error_status_body(struct http_response *http_response,int code);
 http_parser_settings parser_set= {
         .on_message_begin = on_message_begin,
         .on_header_field = on_header_request_field,
@@ -250,9 +251,11 @@ struct Buffer * create_http_response_buffer(struct http_response *http_response)
         buffer_add(buffer,header->value,strlen(header->value));
         buffer_add(buffer,"\r\n",2);
         header = header->next;
-
     }
     buffer_add(buffer,"\r\n",2);
+    if(http_response->code!=200){
+        get_error_status_body(http_response,http_response->code);
+    }
     if(http_response->body!=NULL) {
         buffer_add(buffer, http_response->body, strlen(http_response->body));
     }
@@ -284,4 +287,20 @@ int check_http_request_header_value(struct http_request *http_request,char * nam
         header = header->next;
     }
     return 0;
+}
+static void get_error_status_body(struct http_response *http_response,int code){
+    struct Buffer* buffer=new_buffer(1024,1024);
+    char *message;
+    switch (code){
+        case 404:
+            message="page not found!";
+            buffer_add(buffer,message,strlen(message));
+            break;
+        default:
+            message="unknown status code!";
+            buffer_add(buffer,message,strlen(message));
+            break;
+    }
+    http_response->body=buffer_to_string(buffer);
+    free_buffer(buffer);
 }

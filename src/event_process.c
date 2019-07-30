@@ -120,6 +120,7 @@ void ev_write_callback(int e_pool_fd,struct m_event* watcher){
         free_http_client(client);
         return;
     }
+
     log_info("http write size %d",(int)read_buff->offset);
     struct epoll_event event;
     event.data.ptr = (void *) client;
@@ -181,20 +182,16 @@ static void process_http(int e_pool_fd,struct http_client* client){
     }
     void** fun=map_get(&dispatcher_map, client->request->path);
     if(fun==NULL){
-        client->response->data_type=STATIC_DATA;
         buffer_add(filename,client->request->path,strlen(client->request->path));
         log_info("%s",buffer_to_string(filename));
         int res=stat(buffer_to_string(filename), &sbuf);
         if(res < 0) {
-            client->response->code=404;
             client->response->data_type=DYNAMIC_DATA;
-            struct Buffer* body=new_buffer(1024,1024);
-            char *message="page not found!";
-            buffer_add(body,message,strlen(message));
-            client->response->body=buffer_to_string(body);
-            free_buffer(body);
+            client->response->code=404;
         }else{
+            client->response->data_type=STATIC_DATA;
             client->response->real_path=buffer_to_string(filename);
+            client->response->real_file_size=sbuf.st_size;
         }
     } else {
         client->response->data_type=DYNAMIC_DATA;
