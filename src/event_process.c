@@ -60,6 +60,7 @@ void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
             client->ssl_connect_flag=0;
         }else{
             client->ssl_connect_flag=1;
+            log_info("添加SSL连接:%d ,ip:%s , 当前连接人数%d", in_fd, ip,  total_clients++);
         }
         event.data.ptr = (void *) client;
         event.events = EPOLLIN | EPOLLET;
@@ -69,8 +70,6 @@ void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
             free_http_client(client);
             continue;
         }
-        total_clients++;
-        log_info("添加SSL连接:%d ,ip:%s , 当前连接人数%d", in_fd, ip, total_clients);
     }
 }
 
@@ -86,6 +85,7 @@ void ev_read_callback(int e_pool_fd,struct m_event* watcher){
             client->ssl_connect_flag=0;
         }else{
             client->ssl_connect_flag=1;
+            log_info("添加SSL连接:%d ,ip:%s , 当前连接人数%d", client->event_fd, client->client_ip, total_clients++);
         }
         event.data.ptr = (void *) client;
         event.events = EPOLLIN | EPOLLET;
