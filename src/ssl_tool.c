@@ -79,6 +79,7 @@ SSL * create_ssl(int event_fd){
     ERR_clear_error();
     int	r= SSL_accept(ssl);
     if (r <= 0) {
+        log_info("%d fd:%d",r,event_fd);
         r = SSL_get_error(ssl, r);
         switch (r) {
             case SSL_ERROR_WANT_READ:
