@@ -75,6 +75,10 @@ SSL * create_ssl(int event_fd){
     SSL_set_fd(ssl,event_fd);
     SSL_set_accept_state(ssl);
     SSL_set_app_data(ssl, event_fd);
+    return ssl;
+}
+
+int accept_ssl(SSL * ssl){
     /* 建立 SSL 连接 */
     ERR_clear_error();
     int	r= SSL_accept(ssl);
@@ -83,15 +87,14 @@ SSL * create_ssl(int event_fd){
         switch (r) {
             case SSL_ERROR_WANT_READ:
             case SSL_ERROR_WANT_WRITE:
-                return ssl;
+                return 0;
             default:
                 log_err("SSL_accept(): %s", ssl_errno_s);
-                return NULL;
+                return -1;
         }
     }
-    return ssl;
+    return 1;
 }
-
  int ssl_read_buffer(SSL *ssl,struct Buffer *read_buff) {
      int res = 0;
      int i=0;

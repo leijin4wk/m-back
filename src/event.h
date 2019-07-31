@@ -12,13 +12,13 @@
 
 struct m_event {
     int event_fd;
-    char *client_ip;
-    SSL* ssl;
 };
 struct http_client{
     int event_fd;
     char *client_ip;
     SSL *ssl;
+    //ssl是否链接的标志
+    int ssl_connect_flag;
     struct http_request *request;
     struct Buffer* request_data;
     struct http_response *response;

@@ -29,8 +29,6 @@ static struct m_event* new_m_event(){
         return NULL;
     }
     event->event_fd=-1;
-    event->client_ip=NULL;
-    event->ssl=NULL;
     return event;
 }
 

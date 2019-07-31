@@ -5,6 +5,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include "event_process.h"
 #include "event.h"
 #include "ssl_tool.h"
@@ -51,6 +52,15 @@ void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
             continue;
         }
         client->ssl=ssl;
+        int res=accept_ssl(ssl);
+        if (res<0){
+            log_err("create_ssl fail!");
+            free_http_client(client);
+        }else if(res==0){
+            client->ssl_connect_flag=0;
+        }else{
+            client->ssl_connect_flag=1;
+        }
         event.data.ptr = (void *) client;
         event.events = EPOLLIN | EPOLLET;
         int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, in_fd, &event);
@@ -66,6 +76,29 @@ void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
 
 void ev_read_callback(int e_pool_fd,struct m_event* watcher){
     struct http_client* client= (struct http_client *)watcher;
+    if (client->ssl_connect_flag==0){
+        struct epoll_event event;
+        int res=accept_ssl(client->ssl);
+        if (res<0){
+            log_err("create_ssl fail!");
+            free_http_client(client);
+        }else if(res==0){
+            client->ssl_connect_flag=0;
+        }else{
+            client->ssl_connect_flag=1;
+        }
+        event.data.ptr = (void *) client;
+        event.events = EPOLLIN | EPOLLET;
+        int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
+        if (rc != 0) {
+            rc= epoll_ctl(e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
+            if (rc != 0) {
+                log_err("add epool fail!");
+                free_http_client(client);
+            }
+        }
+        return;
+    }
     log_info("当前读取fd为：%d",client->event_fd);
     struct Buffer* read_buff=new_buffer(MAX_LINE, MAX_REQUEST_SIZE);
     int res=ssl_read_buffer(client->ssl,read_buff);
@@ -86,10 +119,11 @@ void ev_read_callback(int e_pool_fd,struct m_event* watcher){
     if (rc != 0) {
         rc= epoll_ctl(e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
         if (rc != 0) {
+            log_err("add epool fail!");
             free_http_client(client);
         }
     }
-    log_info("epoll add write fd：%d success!",client->event_fd);
+    log_info("fd %d request read complete!",client->event_fd);
 }
 
 void ev_write_callback(int e_pool_fd,struct m_event* watcher){
@@ -133,8 +167,7 @@ void ev_write_callback(int e_pool_fd,struct m_event* watcher){
             free_http_client(client);
         }
     }
-    log_info("epoll add read fd：%d success!",client->event_fd);
-
+    log_info("fd %d response write complete!",client->event_fd);
 }
 
 struct http_client* new_http_client(){
@@ -147,6 +180,7 @@ struct http_client* new_http_client(){
     client->response=NULL;
     client->request=NULL;
     client->request_data=NULL;
+    client->ssl_connect_flag=0;
     client->response_data=new_buffer(MAX_LINE, MAX_RESPONSE_SIZE);
     return client;
 }

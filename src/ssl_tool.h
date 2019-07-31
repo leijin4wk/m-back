@@ -10,6 +10,8 @@ void init_server_ctx(void);
 
 SSL *create_ssl(int event_fd);
 
+int accept_ssl(SSL * ssl);
+
 int ssl_read_buffer(SSL *ssl,struct Buffer *read_buff);
 
 int ssl_write_buffer(SSL *ssl,struct Buffer *write_buff);
