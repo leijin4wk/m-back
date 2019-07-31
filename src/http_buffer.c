@@ -178,7 +178,6 @@ static int on_body(http_parser* parser, const char* at, size_t length) {
     return 0;
 }
 static int on_message_complete(http_parser* parser) {
-    log_info("http parser complete");
     return 0;
 }
 static int parser_query_param(struct http_request *request,const char *buf, size_t buflen) {
@@ -289,7 +288,7 @@ void get_error_status_body(struct http_response *http_response,int code){
     char *message;
     switch (code){
         case 404:
-            message="page not found!";
+            message="resource not found!";
             buffer_add(buffer,message,strlen(message));
             break;
         default:

@@ -29,6 +29,7 @@ void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
     memset(&in_addr, 0, sizeof(struct sockaddr_in));
     int in_fd;
     while(1) {
+        in_len=sizeof(struct sockaddr_in);
         in_fd = accept(watcher->event_fd, (struct sockaddr*)&in_addr, &in_len);
         if (in_fd < 0) {
             break;
@@ -60,21 +61,22 @@ void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
         }
         total_clients++;
         log_info("添加SSL连接:%d ,ip:%s , 当前连接人数%d", in_fd, ip, total_clients);
+        log_info("epoll add read fd：%d success!",client->event_fd);
     }
 }
 
 void ev_read_callback(int e_pool_fd,struct m_event* watcher){
     struct http_client* client= (struct http_client *)watcher;
+    log_info("当前读取fd为：%d",client->event_fd);
     struct Buffer* read_buff=new_buffer(MAX_LINE, MAX_REQUEST_SIZE);
     int res=ssl_read_buffer(client->ssl,read_buff);
     if(res<0){
+        log_err("当前出错fd为：%d",client->event_fd);
         free_http_client(client);
         return;
     }
-    log_info("http read size %d",(int)read_buff->offset);
     client->request_data=read_buff;
     client->request=parser_http_request_buffer(client->request_data);
-    log_info("http parser complete!");
     //这个是关键方法
     process_http(e_pool_fd,client);
 
@@ -88,24 +90,23 @@ void ev_read_callback(int e_pool_fd,struct m_event* watcher){
             free_http_client(client);
         }
     }
+    log_info("epoll add write fd：%d success!",client->event_fd);
 }
 
 void ev_write_callback(int e_pool_fd,struct m_event* watcher){
     int res=0;
     struct http_client* client= (struct http_client *)watcher;
+    log_info("当前写fd为：%d",client->event_fd);
     struct http_header* header=add_http_response_header(client->response);
     header->name=strdup("Content-Length");
     if(client->response->data_type==DYNAMIC_DATA) {
         char *length = NULL;
         int_to_str(strlen(client->response->body), &length);
         header->value = length;
-        log_info("http content size %s",header->value);
-
     }else{
         char *length = NULL;
         int_to_str(client->response->real_file_size, &length);
         header->value = length;
-        log_info("http write file size %d",(int)client->response->real_file_size);
     }
     struct Buffer* read_buff=create_http_response_buffer(client->response);
     res=ssl_write_buffer(client->ssl,read_buff);
@@ -133,7 +134,7 @@ void ev_write_callback(int e_pool_fd,struct m_event* watcher){
             free_http_client(client);
         }
     }
-    log_info("epoll add read  success!");
+    log_info("epoll add read fd：%d success!",client->event_fd);
 
 }
 
@@ -175,12 +176,17 @@ static void process_http(int e_pool_fd,struct http_client* client){
     int flag=0;
     buffer_add(filename,root,strlen(root));
     client->response=new_http_response(client->request);
-    log_info("%s",client->request->path);
     if(check_http_request_header_value(client->request,"Upgrade-Insecure-Requests","1")){
         struct http_header* header= add_http_response_header(client->response);
         header->name=strdup("Content-Security-Policy");
         header->value=strdup("upgrade-insecure-requests");
     }
+    if(check_http_request_header_value(client->request,"Connection","keep-alive")){
+        struct http_header* header= add_http_response_header(client->response);
+        header->name=strdup("Connection");
+        header->value=strdup("Keep-Alive");
+    }
+
     void** fun=map_get(&dispatcher_map, client->request->path);
     if(fun==NULL){
         buffer_add(filename,client->request->path,strlen(client->request->path));

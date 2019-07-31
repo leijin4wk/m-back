@@ -94,6 +94,7 @@ SSL * create_ssl(int event_fd){
 
  int ssl_read_buffer(SSL *ssl,struct Buffer *read_buff) {
      int res = 0;
+     int i=0;
      while (1) {
          res= buffer_read_tls(ssl,read_buff);
          if(res==0){
@@ -116,6 +117,7 @@ static int buffer_read_tls(SSL *ssl,struct Buffer *read_buff)
         r = SSL_get_error(ssl, r);
         switch (r) {
             case SSL_ERROR_WANT_READ:
+                return 0;
             case SSL_ERROR_WANT_WRITE:
                 return 0;
             case SSL_ERROR_SYSCALL:
@@ -123,6 +125,7 @@ static int buffer_read_tls(SSL *ssl,struct Buffer *read_buff)
                     case EINTR:
                         return 1;
                     case EAGAIN:
+                        log_err("EAGAIN");
                         return 0;
                     default:
                         return -1;
