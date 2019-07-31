@@ -64,7 +64,7 @@ void ev_accept_start(int server_fd){
     }
     accept_event->event_fd=socket_accept_fd;
     event.data.ptr = (void *)accept_event;
-    event.events = EPOLLIN | EPOLLET |EPOLLONESHOT;
+    event.events = EPOLLIN | EPOLLET;
     int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, server_fd, &event);
     if (rc != 0){
         log_err("accept_fd epoll_add fail!");

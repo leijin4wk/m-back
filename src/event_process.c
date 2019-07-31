@@ -61,7 +61,6 @@ void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
         }
         total_clients++;
         log_info("添加SSL连接:%d ,ip:%s , 当前连接人数%d", in_fd, ip, total_clients);
-        log_info("epoll add read fd：%d success!",client->event_fd);
     }
 }
 
@@ -81,7 +80,7 @@ void ev_read_callback(int e_pool_fd,struct m_event* watcher){
     process_http(e_pool_fd,client);
 
     struct epoll_event event;
-    event.data.ptr = (void *) client;
+    event.data.ptr = (void *) watcher;
     event.events = EPOLLOUT | EPOLLET ;
     int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
     if (rc != 0) {
