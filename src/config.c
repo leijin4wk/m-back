@@ -7,6 +7,7 @@
 
 cJSON *json_config;
 char* root;
+char* index_page;
 void read_json_config(const char * json_config_name){
     struct Buffer* buffer=read_file_to_buffer(json_config_name);
     if(buffer==NULL){
@@ -25,5 +26,11 @@ void read_json_config(const char * json_config_name){
         exit(-1);
     }
     root=root_item->valuestring;
+    cJSON *index_item=cJSON_GetObjectItem(json_config,"index");
+    if(index_item==NULL){
+        log_err("index is not  config!");
+        exit(-1);
+    }
+    index_page=index_item->valuestring;
 }
 

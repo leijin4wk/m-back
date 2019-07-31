@@ -19,6 +19,7 @@ int total_clients=0;
 
 extern map_void_t dispatcher_map;
 extern char* root;
+extern char* index_page;
 static struct http_response *new_http_response();
 static void process_http(int e_pool_fd,struct http_client* client);
 void ev_accept_callback(int e_pool_fd,struct m_event *watcher)
@@ -171,6 +172,7 @@ static void process_http(int e_pool_fd,struct http_client* client){
     struct stat sbuf;
     struct Buffer* filename=new_buffer(SHORTLINE,SHORTLINE);
     void (*function)(struct http_request*,struct http_response*);
+    int flag=0;
     buffer_add(filename,root,strlen(root));
     client->response=new_http_response(client->request);
     log_info("%s",client->request->path);
@@ -182,7 +184,6 @@ static void process_http(int e_pool_fd,struct http_client* client){
     void** fun=map_get(&dispatcher_map, client->request->path);
     if(fun==NULL){
         buffer_add(filename,client->request->path,strlen(client->request->path));
-        log_info("%s",buffer_to_string(filename));
         int res=stat(buffer_to_string(filename), &sbuf);
         if(res < 0) {
             client->response->data_type=DYNAMIC_DATA;
@@ -192,6 +193,17 @@ static void process_http(int e_pool_fd,struct http_client* client){
                 client->response->data_type = STATIC_DATA;
                 client->response->real_file_path = buffer_to_string(filename);
                 client->response->real_file_size = sbuf.st_size;
+            }else if(S_ISDIR(sbuf.st_mode)&&strcmp("/",client->request->path)==0){
+                buffer_add(filename,index_page,strlen(index_page));
+                flag=stat(buffer_to_string(filename), &sbuf);
+                if(flag<0){
+                    client->response->data_type=DYNAMIC_DATA;
+                    client->response->code=404;
+                }else{
+                    client->response->data_type = STATIC_DATA;
+                    client->response->real_file_size = sbuf.st_size;
+                    client->response->real_file_path = buffer_to_string(filename);
+                }
             }else{
                 client->response->data_type=DYNAMIC_DATA;
                 client->response->code=404;
