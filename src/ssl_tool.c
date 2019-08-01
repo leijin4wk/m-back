@@ -86,7 +86,10 @@ int accept_ssl(SSL * ssl){
         r = SSL_get_error(ssl, r);
         switch (r) {
             case SSL_ERROR_WANT_READ:
+                log_info("SSL_ERROR_WANT_READ");
+                return 0;
             case SSL_ERROR_WANT_WRITE:
+                log_info("SSL_ERROR_WANT_WRITE");
                 return 0;
             default:
                 log_err("SSL_accept(): %s", ssl_errno_s);
@@ -112,25 +115,34 @@ int accept_ssl(SSL * ssl){
 //返回零代表要继续循环，返回1代表结束
 static int buffer_read_tls(SSL *ssl,struct Buffer *read_buff)
 {
-    int		r;
+    int		r,res;
     char buff[MAX_READLINE];
     ERR_clear_error();
     r = SSL_read(ssl, buff, MAX_READLINE);
     if (r <= 0) {
-        r = SSL_get_error(ssl, r);
-        switch (r) {
+        log_info("%d  r",r);
+        res = SSL_get_error(ssl, r);
+        switch (res) {
             case SSL_ERROR_WANT_READ:
+                log_info("%d,SSL_ERROR_WANT_READ",res);
                 return 0;
             case SSL_ERROR_WANT_WRITE:
+                log_info("%d, SSL_ERROR_WANT_WRITE",res);
                 return 0;
+            case SSL_ERROR_ZERO_RETURN:
+                log_info("%d, SSL_ERROR_ZERO_RETURN",res);
+                return -1;
             case SSL_ERROR_SYSCALL:
+                log_info("%d SSL_ERROR_SYSCALL %d error",res,errno);
                 switch (errno) {
+                    //EINTR：指操作被中断唤醒，需要重新读/写
                     case EINTR:
-                        return 1;
+                        return 0;
+                        //在非阻塞模式下调用了阻塞操作，在该操作没有完成就返回这个错误，这个错误不会破坏socket的同步，不用管它，下次循环接着recv就可以。
                     case EAGAIN:
-                        log_err("EAGAIN");
                         return 0;
                     default:
+                        log_info("default");
                         return -1;
                 }
                 /* FALLTHROUGH */

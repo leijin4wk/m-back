@@ -62,7 +62,8 @@ void ev_accept_start(int server_fd){
     }
     accept_event->event_fd=socket_accept_fd;
     event.data.ptr = (void *)accept_event;
-    event.events = EPOLLIN | EPOLLET;
+    //采用默认触发方式（水平触发）EPOLLLT  https://blog.csdn.net/zxm342698145/article/details/80524331 这篇文章给了很大的帮助
+    event.events = EPOLLIN ;
     int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, server_fd, &event);
     if (rc != 0){
         log_err("accept_fd epoll_add fail!");
