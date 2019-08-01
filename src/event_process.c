@@ -15,7 +15,7 @@
 #include "module.h"
 #include "http_buffer.h"
 #include "str_tool.h"
-int total_clients=0;
+int total_clients=1;
 
 
 extern map_void_t dispatcher_map;
