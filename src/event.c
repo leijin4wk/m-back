@@ -72,9 +72,11 @@ void ev_accept_start(int server_fd){
 void ev_loop_start(){
     log_info("server loop started.");
     int i,n;
-    int time=10;
+
+    int time=-1;
     int flag=1;
     while (flag) {
+        //time =-1 标识超时时间无穷大
         n = epoll_wait(e_pool_fd, events, MAXEVENTS, time);
         for (i = 0; i < n; i++) {
             struct m_event *r = (struct m_event *)events[i].data.ptr;
