@@ -12,6 +12,7 @@ option (DEBUG  "DEBUG" ON)
 if (DEBUG)
     message("DEBUG OPEN")
     add_definitions(-DDEBUG)
+    add_definitions(-D_BPLUS_TREE_DEBUG)
 endif()
 
 ##添加链接器参数
