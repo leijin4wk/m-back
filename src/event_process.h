@@ -9,9 +9,9 @@
 #define SHORTLINE   512
 void ev_accept_callback(struct m_event *watcher);
 
-void ev_read_callback(struct m_event* watcher);
+void ev_read_callback(void* watcher);
 
-void ev_write_callback(struct m_event* watcher);
+void ev_write_callback(void* watcher);
 
 struct http_client* new_http_client();
 

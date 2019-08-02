@@ -66,7 +66,7 @@ void ev_accept_callback(struct m_event *watcher) {
     }
 }
 
-void ev_read_callback(struct m_event *watcher) {
+void ev_read_callback(void *watcher) {
     struct http_client *client = (struct http_client *) watcher;
     if (client->ssl_connect_flag == 0) {
         struct epoll_event event;
@@ -82,9 +82,9 @@ void ev_read_callback(struct m_event *watcher) {
         }
         event.data.ptr = (void *) client;
         event.events = EPOLLIN | EPOLLET;
-        int rc = epoll_ctl(watcher->e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
+        int rc = epoll_ctl(client->e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
         if (rc != 0) {
-            rc = epoll_ctl(watcher->e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
+            rc = epoll_ctl(client->e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
             if (rc != 0) {
                 log_err("add epool fail!");
                 free_http_client(client);
@@ -119,7 +119,7 @@ void ev_read_callback(struct m_event *watcher) {
     log_info("fd %d request read complete!", client->event_fd);
 }
 
-void ev_write_callback( struct m_event *watcher) {
+void ev_write_callback(void *watcher) {
     int res = 0;
     struct http_client *client = (struct http_client *) watcher;
     log_info("当前写fd为：%d", client->event_fd);
