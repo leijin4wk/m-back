@@ -1,3 +1,8 @@
+/**********************************
+ * @author      Johan Hanssen Seferidis
+ * License:     MIT
+ *
+ **********************************/
 #ifndef _THPOOL_
 #define _THPOOL_
 

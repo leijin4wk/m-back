@@ -1,3 +1,8 @@
+/**********************************
+ * @author      Johan Hanssen Seferidis
+ * License:     MIT
+ *
+ **********************************/
 #include <unistd.h>
 #include <signal.h>
 #include <stdio.h>
