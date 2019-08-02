@@ -11,9 +11,11 @@
 #define MAXEVENTS 1024
 
 struct m_event {
+    int e_pool_fd;
     int event_fd;
 };
 struct http_client{
+    int e_pool_fd;
     int event_fd;
     char *client_ip;
     SSL *ssl;

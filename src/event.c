@@ -12,8 +12,10 @@
 #include "socket_tool.h"
 #include "dbg.h"
 #include "event_process.h"
+#include "thpool.h"
 
-
+threadpool read_thread_pool;
+threadpool write_thread_pool;
 struct epoll_event *events;
 
 int e_pool_fd;
@@ -29,6 +31,7 @@ static struct m_event* new_m_event(){
         return NULL;
     }
     event->event_fd=-1;
+    event->e_pool_fd=-1;
     return event;
 }
 
@@ -61,10 +64,11 @@ void ev_accept_start(int server_fd){
         exit(1);
     }
     accept_event->event_fd=socket_accept_fd;
+    accept_event->e_pool_fd=e_pool_fd;
     event.data.ptr = (void *)accept_event;
     //采用默认触发方式（水平触发）EPOLLLT  https://blog.csdn.net/zxm342698145/article/details/80524331 这篇文章给了很大的帮助
     event.events = EPOLLIN ;
-    int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, server_fd, &event);
+    int rc = epoll_ctl(accept_event->e_pool_fd, EPOLL_CTL_ADD, server_fd, &event);
     if (rc != 0){
         log_err("accept_fd epoll_add fail!");
     }
@@ -81,7 +85,7 @@ void ev_loop_start(){
         for (i = 0; i < n; i++) {
             struct m_event *r = (struct m_event *)events[i].data.ptr;
             if(r->event_fd==socket_accept_fd){
-                ev_accept_callback(e_pool_fd,r);
+                ev_accept_callback(r);
             }else{
                 if ((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP)) {
@@ -92,11 +96,16 @@ void ev_loop_start(){
                 }
                 else if(events[i].events&EPOLLIN )//有数据可读，写socket
                 {
-                    ev_read_callback(e_pool_fd,r);
-
+                  int res= thpool_add_work(read_thread_pool, ev_read_callback,r);
+                  if (res<0){
+                      log_err("fd:%d 添加读线程失败",r->event_fd);
+                  }
                 }else if(events[i].events&EPOLLOUT) //有数据待发送，写socket
                 {
-                    ev_write_callback(e_pool_fd,r);
+                    int res=  thpool_add_work(read_thread_pool, ev_write_callback,r);
+                    if (res<0){
+                        log_err("fd:%d 添加写线程失败",r->event_fd);
+                    }
                 }else{
                     log_err("未知的事件:%d",events[i].events);
                 }

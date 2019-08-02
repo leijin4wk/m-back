@@ -25,9 +25,9 @@ extern char *index_page;
 
 static struct http_response *new_http_response();
 
-static void process_http(int e_pool_fd, struct http_client *client);
+static void process_http(struct http_client *client);
 
-void ev_accept_callback(int e_pool_fd, struct m_event *watcher) {
+void ev_accept_callback(struct m_event *watcher) {
     struct sockaddr_in in_addr;
     socklen_t in_len;
     memset(&in_addr, 0, sizeof(struct sockaddr_in));
@@ -48,6 +48,7 @@ void ev_accept_callback(int e_pool_fd, struct m_event *watcher) {
     char *ip = inet_ntoa(in_addr.sin_addr);
     alloc_cpy(client->client_ip, ip, strlen(ip))
     client->event_fd = in_fd;
+    client->e_pool_fd=watcher->e_pool_fd;
     SSL *ssl = create_ssl(client->event_fd);
     if (ssl == NULL) {
         log_err("create_ssl fail!");
@@ -57,7 +58,7 @@ void ev_accept_callback(int e_pool_fd, struct m_event *watcher) {
     client->ssl = ssl;
     event.data.ptr = (void *) client;
     event.events = EPOLLIN | EPOLLET;
-    int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, in_fd, &event);
+    int rc = epoll_ctl(watcher->e_pool_fd, EPOLL_CTL_ADD, in_fd, &event);
     if (rc != 0) {
         log_err("epoll_read add fail!");
         free_http_client(client);
@@ -65,7 +66,7 @@ void ev_accept_callback(int e_pool_fd, struct m_event *watcher) {
     }
 }
 
-void ev_read_callback(int e_pool_fd, struct m_event *watcher) {
+void ev_read_callback(struct m_event *watcher) {
     struct http_client *client = (struct http_client *) watcher;
     if (client->ssl_connect_flag == 0) {
         struct epoll_event event;
@@ -81,9 +82,9 @@ void ev_read_callback(int e_pool_fd, struct m_event *watcher) {
         }
         event.data.ptr = (void *) client;
         event.events = EPOLLIN | EPOLLET;
-        int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
+        int rc = epoll_ctl(watcher->e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
         if (rc != 0) {
-            rc = epoll_ctl(e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
+            rc = epoll_ctl(watcher->e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
             if (rc != 0) {
                 log_err("add epool fail!");
                 free_http_client(client);
@@ -102,14 +103,14 @@ void ev_read_callback(int e_pool_fd, struct m_event *watcher) {
     client->request_data = read_buff;
     client->request = parser_http_request_buffer(client->request_data);
     //这个是关键方法
-    process_http(e_pool_fd, client);
+    process_http(client);
 
     struct epoll_event event;
     event.data.ptr = (void *) watcher;
     event.events = EPOLLOUT | EPOLLET;
-    int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
+    int rc = epoll_ctl(client->e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
     if (rc != 0) {
-        rc = epoll_ctl(e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
+        rc = epoll_ctl(client->e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
         if (rc != 0) {
             log_err("add epool fail!");
             free_http_client(client);
@@ -118,7 +119,7 @@ void ev_read_callback(int e_pool_fd, struct m_event *watcher) {
     log_info("fd %d request read complete!", client->event_fd);
 }
 
-void ev_write_callback(int e_pool_fd, struct m_event *watcher) {
+void ev_write_callback( struct m_event *watcher) {
     int res = 0;
     struct http_client *client = (struct http_client *) watcher;
     log_info("当前写fd为：%d", client->event_fd);
@@ -151,9 +152,9 @@ void ev_write_callback(int e_pool_fd, struct m_event *watcher) {
     struct epoll_event event;
     event.data.ptr = (void *) client;
     event.events = EPOLLIN | EPOLLET;
-    int rc = epoll_ctl(e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
+    int rc = epoll_ctl(client->e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
     if (rc != 0) {
-        rc = epoll_ctl(e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
+        rc = epoll_ctl(client->e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
         if (rc != 0) {
             log_err("epoll_write MOD fail!");
             free_http_client(client);
@@ -196,7 +197,7 @@ static struct http_response *new_http_response(struct http_request *request) {
     return response;
 }
 
-static void process_http(int e_pool_fd, struct http_client *client) {
+static void process_http(struct http_client *client) {
     struct stat sbuf;
     struct Buffer *filename = new_buffer(SHORTLINE, SHORTLINE);
     void (*function)(struct http_request *, struct http_response *);

@@ -7,11 +7,11 @@
 #include "event.h"
 
 #define SHORTLINE   512
-void ev_accept_callback(int e_pool_fd,struct m_event *watcher);
+void ev_accept_callback(struct m_event *watcher);
 
-void ev_read_callback(int e_pool_fd,struct m_event* watcher);
+void ev_read_callback(struct m_event* watcher);
 
-void ev_write_callback(int e_pool_fd,struct m_event* watcher);
+void ev_write_callback(struct m_event* watcher);
 
 struct http_client* new_http_client();
 
