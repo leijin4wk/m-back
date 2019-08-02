@@ -86,10 +86,8 @@ int accept_ssl(SSL * ssl){
         r = SSL_get_error(ssl, r);
         switch (r) {
             case SSL_ERROR_WANT_READ:
-                log_info("SSL_ERROR_WANT_READ");
                 return 0;
             case SSL_ERROR_WANT_WRITE:
-                log_info("SSL_ERROR_WANT_WRITE");
                 return 0;
             default:
                 log_err("SSL_accept(): %s", ssl_errno_s);
@@ -118,6 +116,7 @@ static int buffer_read_tls(SSL *ssl,struct Buffer *read_buff)
     int		r,res;
     char buff[MAX_READLINE];
     ERR_clear_error();
+    //当前可读的字节数
     r = SSL_read(ssl, buff, MAX_READLINE);
     if (r <= 0) {
         log_info("%d  r",r);

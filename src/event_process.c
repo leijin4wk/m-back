@@ -74,7 +74,6 @@ void ev_read_callback(int e_pool_fd, struct m_event *watcher) {
             log_err("create_ssl fail!");
             free_http_client(client);
         } else if (res == 0) {
-            log_info("client fd %d",client->event_fd);
             client->ssl_connect_flag = 0;
         } else {
             client->ssl_connect_flag = 1;
