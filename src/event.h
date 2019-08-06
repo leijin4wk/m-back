@@ -8,6 +8,7 @@
 #include <openssl/ssl.h>
 #include "buffer.h"
 #include "timer.h"
+#include "http.h"
 //最大同时处理事件数
 #define MAXEVENTS 1024
 
