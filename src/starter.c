@@ -1,9 +1,7 @@
 #include <stdio.h>
-#include "db_tool.h"
 #include "config.h"
 #include "event.h"
 #include "ssl_tool.h"
-#include "db_tool.h"
 #include "socket_tool.h"
 #include "module.h"
 #include "dbg.h"
@@ -17,8 +15,6 @@ int main(){
     load_and_init_module();
     init_server_ctx();
     log_info("ssl init complete!");
-    init_connection_pool();
-    log_info("db connection_pool init complete!");
     int server_fd= init_server_socket();
     if(server_fd<0){
         log_err("server socket init fail!");

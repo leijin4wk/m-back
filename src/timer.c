@@ -1,8 +1,10 @@
 //
 // Created by oyo on 2019-08-02.
 //
+#include <sys/time.h>
 #include "timer.h"
 #include "dbg.h"
+
 //用来存储系统当前毫秒数
 size_t current_time_millis;
 //全局的时间优先级队列
@@ -23,7 +25,7 @@ static size_t get_pos(void *a);
 static void set_pos(void *a, size_t pos);
 
 void timer_init() {
-    time_pq = pqueue_init(TIMER_QUEUE_SIZE, cmp_pri, get_pri, set_pri, get_pos, set_pos);
+    time_pq = p_queue_init(TIMER_QUEUE_SIZE, cmp_pri, get_pri, set_pri, get_pos, set_pos);
     if (!time_pq){
         log_err("time_pq init fail!");
          exit(1);
@@ -36,14 +38,14 @@ int find_timer(){
     struct timer_node_t *timer_node;
     int time = -1;
     pthread_mutex_lock(&timer_mutex);
-    while (pqueue_size(time_pq)>0) {
+    while (p_queue_size(time_pq)>0) {
         time_update();
-        timer_node = (struct timer_node_t *)pqueue_peek(time_pq);
+        timer_node = (struct timer_node_t *)p_queue_peek(time_pq);
         if(timer_node==NULL){
             log_err("pqueue_peek get node fail!");
         }
         if (timer_node->deleted) {
-            timer_node=pqueue_pop(time_pq);
+            timer_node=p_queue_pop(time_pq);
             free(timer_node);
             continue;
         }
@@ -56,8 +58,9 @@ int find_timer(){
     return time;
 }
 
-void add_timer(struct http_client *client){
+void add_timer(void* value,void (*call_back)(void*, struct timer_node_t *)){
     int rc;
+    void (*function)(void*,struct timer_node_t*)=call_back;
     struct timer_node_t *timer_node = (struct timer_node_t *)malloc(sizeof(struct timer_node_t));
     if(timer_node==NULL){
         log_err("timer_node malloc fail!");
@@ -65,45 +68,26 @@ void add_timer(struct http_client *client){
     }
     pthread_mutex_lock(&timer_mutex);
     time_update();
-    client->last_update_time=current_time_millis;
-    timer_node->client = client;
-    timer_node->deleted=0;
-    timer_node->pri = current_time_millis + TIMEOUT_DEFAULT;
-    rc = pqueue_insert(time_pq, timer_node);
+    rc = p_queue_insert(time_pq, timer_node);
     if (rc!=0){
         log_err("pqueue_insert fail!");
         exit(1);
     }
-    client->timer=timer_node;
+    function(value,timer_node);
+
     pthread_mutex_unlock(&timer_mutex);
 }
-void handle_expire_timers(){
-    struct timer_node_t *timer_node;
-    struct http_client * client;
+void handle_expire_timers(void (*call_back)(struct timer_node_t *)){
+    void (*function)(struct timer_node_t*)=call_back;
     pthread_mutex_lock(&timer_mutex);
-    while (pqueue_size(time_pq)>0) {
+    while (p_queue_size(time_pq)>0) {
         time_update();
-        timer_node = (struct timer_node_t *)pqueue_peek(time_pq);
+        struct timer_node_t * timer_node = (struct timer_node_t *)(p_queue_peek(time_pq));
         if(timer_node==NULL){
             log_err("timer_node malloc fail!");
             exit(1);
         }
-        client=timer_node->client;
-        if (timer_node->deleted) {
-            timer_node=pqueue_pop(time_pq);
-            free(timer_node);
-            //如果客户端最后更新时间超过超时，删除客户端
-            if(current_time_millis-client->last_update_time>TIMEOUT_DEFAULT){
-                free_http_client(client);
-            }
-        }else{
-            //如果客户端最后更新时间超过5倍超时，删除客户端
-            if(current_time_millis-client->last_update_time>TIMEOUT_DEFAULT*5){
-                timer_node=pqueue_pop(time_pq);
-                free(timer_node);
-                free_http_client(client);
-            }
-        }
+        function(timer_node);
         if (timer_node->pri > current_time_millis) {
             return;
         }
@@ -111,8 +95,10 @@ void handle_expire_timers(){
     pthread_mutex_unlock(&timer_mutex);
 }
 
-void delete_timer(struct http_client *client){
-    client->timer->deleted=1;
+void delete_timer(void* value,void (*call_back)(void*)){
+    void (*function)(void*);
+    function=call_back;
+    function(value);
 }
 
 

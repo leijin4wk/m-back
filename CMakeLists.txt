@@ -37,8 +37,6 @@ add_subdirectory(web/home)
 add_executable(m_back ${DIR_SRCS})
 #pthread  posix的线程库
 target_link_libraries(m_back pthread)
-#zdb  数据库连接池库
-target_link_libraries(m_back zdb)
 #https  stl openssl依赖库
 target_link_libraries(m_back ssl crypto)
 #dl

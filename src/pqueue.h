@@ -48,6 +48,8 @@ typedef int (*pqueue_cmp_pri_f)(pqueue_pri_t next, pqueue_pri_t curr);
 typedef size_t (*pqueue_get_pos_f)(void *a);
 typedef void (*pqueue_set_pos_f)(void *a, size_t pos);
 
+
+
 /** the priority queue handle */
 typedef struct pqueue_t
 {
@@ -79,7 +81,7 @@ typedef struct pqueue_t
  * @return the handle or NULL for insufficent memory
  */
 pqueue_t *
-pqueue_init(size_t n,
+p_queue_init(size_t n,
             pqueue_cmp_pri_f cmppri,
             pqueue_get_pri_f getpri,
             pqueue_set_pri_f setpri,
@@ -91,14 +93,14 @@ pqueue_init(size_t n,
  * free all memory used by the queue
  * @param q the queue
  */
-void pqueue_free(pqueue_t *q);
+void p_queue_free(pqueue_t *q);
 
 
 /**
  * return the size of the queue.
  * @param q the queue
  */
-size_t pqueue_size(pqueue_t *q);
+size_t p_queue_size(pqueue_t *q);
 
 
 /**
@@ -107,7 +109,19 @@ size_t pqueue_size(pqueue_t *q);
  * @param d the item
  * @return 0 on success
  */
-int pqueue_insert(pqueue_t *q, void *d);
+int p_queue_insert(pqueue_t *q, void *d);
+
+
+/**
+ * move an existing entry to a different priority
+ * @param q the queue
+ * @param new_pri the new priority
+ * @param d the entry
+ */
+void
+p_queue_change_priority(pqueue_t *q,
+                       pqueue_pri_t new_pri,
+                       void *d);
 
 
 /**
@@ -115,15 +129,34 @@ int pqueue_insert(pqueue_t *q, void *d);
  * @param q the queue
  * @return NULL on error, otherwise the entry
  */
-void *pqueue_pop(pqueue_t *q);
+void *p_queue_pop(pqueue_t *q);
+
+
+/**
+ * remove an item from the queue.
+ * @param q the queue
+ * @param d the entry
+ * @return 0 on success
+ */
+int p_queue_remove(pqueue_t *q, void *d);
+
 
 /**
  * access highest-ranking item without removing it.
  * @param q the queue
  * @return NULL on error, otherwise the entry
  */
-void *pqueue_peek(pqueue_t *q);
+void *p_queue_peek(pqueue_t *q);
 
+
+
+/**
+ * checks that the pq is in the right order, etc
+ * @internal
+ * debug function only
+ * @param q the queue
+ */
+int p_queue_is_valid(pqueue_t *q);
 
 
 #endif /* PQUEUE_H */

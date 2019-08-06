@@ -8,12 +8,11 @@
 #include<unistd.h>
 #include <netdb.h>
 #include "http_parser.h"
-#include "event.h"
 #include "socket_tool.h"
 #include "dbg.h"
+#include "event.h"
 #include "event_process.h"
 #include "thpool.h"
-
 threadpool read_thread_pool;
 threadpool write_thread_pool;
 struct epoll_event *events;
@@ -23,7 +22,26 @@ int e_pool_fd;
 static int socket_accept_fd;
 
 static struct m_event* new_m_event();
+static void handle_expire_timers_call_back(void *client, struct timer_node_t *node);
 
+static void handle_expire_timers_call_back(void *client, struct timer_node_t *node) {
+    struct http_client *http_client = (struct http_client *) node->value;
+    if (node->deleted) {
+        struct timer_node_t *top = p_queue_pop(time_pq);
+        free(top);
+        //如果客户端最后更新时间超过超时，删除客户端
+        if (current_time_millis - http_client->last_update_time > TIMEOUT_DEFAULT) {
+            free_http_client(client);
+        }
+    } else {
+        //如果客户端最后更新时间超过5倍超时，删除客户端
+        if (current_time_millis - http_client->last_update_time > TIMEOUT_DEFAULT * 5) {
+            struct timer_node_t *top = p_queue_pop(time_pq);
+            free(top);
+            free_http_client(client);
+        }
+    }
+}
 static struct m_event* new_m_event(){
     struct m_event *event=malloc(sizeof(struct m_event));
     if (event==NULL){
@@ -84,7 +102,7 @@ void ev_loop_start(){
         time=find_timer();
         n = epoll_wait(e_pool_fd, events, MAXEVENTS, time);
         //处理超时事件
-        handle_expire_timers();
+        handle_expire_timers((void (*)(struct timer_node_t *))handle_expire_timers_call_back);
         for (i = 0; i < n; i++) {
             struct m_event *r = (struct m_event *)events[i].data.ptr;
             if(r->event_fd==socket_accept_fd){
