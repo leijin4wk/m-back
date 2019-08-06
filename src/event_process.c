@@ -60,7 +60,7 @@ void ev_accept_callback(struct m_event *watcher) {
     }
     client->ssl = ssl;
     event.data.ptr = (void *) client;
-    event.events = EPOLLIN | EPOLLET;
+    event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
     int rc = epoll_ctl(watcher->e_pool_fd, EPOLL_CTL_ADD, in_fd, &event);
     if (rc != 0) {
         log_err("epoll_read add fail!");
@@ -90,7 +90,7 @@ void ev_read_callback(void *watcher) {
         //创建新节点
         add_timer(client);
         event.data.ptr = (void *) client;
-        event.events = EPOLLIN | EPOLLET;
+        event.events = EPOLLIN | EPOLLET |EPOLLONESHOT;
         int rc = epoll_ctl(client->e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
         if (rc != 0) {
             rc = epoll_ctl(client->e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
@@ -119,7 +119,7 @@ void ev_read_callback(void *watcher) {
     add_timer(client);
     struct epoll_event event;
     event.data.ptr = (void *) watcher;
-    event.events = EPOLLOUT | EPOLLET;
+    event.events = EPOLLOUT | EPOLLET |EPOLLONESHOT;
     int rc = epoll_ctl(client->e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
     if (rc != 0) {
         rc = epoll_ctl(client->e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
@@ -171,7 +171,7 @@ void ev_write_callback(void *watcher) {
 
     struct epoll_event event;
     event.data.ptr = (void *) client;
-    event.events = EPOLLIN | EPOLLET;
+    event.events = EPOLLIN | EPOLLET |EPOLLONESHOT;
     int rc = epoll_ctl(client->e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
     if (rc != 0) {
         rc = epoll_ctl(client->e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
