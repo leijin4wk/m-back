@@ -75,13 +75,16 @@ void ev_accept_start(int server_fd){
 }
 void ev_loop_start(){
     log_info("server loop started.");
+    timer_init();
     int i,n;
-
-    int time=-1;
+    int time=0;
     int flag=1;
     while (flag) {
-        //time =-1 标识超时时间无穷大
+        //获取最小超时时间
+        time=find_timer();
         n = epoll_wait(e_pool_fd, events, MAXEVENTS, time);
+        //处理超时事件
+        handle_expire_timers();
         for (i = 0; i < n; i++) {
             struct m_event *r = (struct m_event *)events[i].data.ptr;
             if(r->event_fd==socket_accept_fd){
@@ -102,7 +105,7 @@ void ev_loop_start(){
                   }
                 }else if(events[i].events&EPOLLOUT) //有数据待发送，写socket
                 {
-                    int res=  thpool_add_work(read_thread_pool, ev_write_callback,(void*)r);
+                    int res=  thpool_add_work(write_thread_pool, ev_write_callback,(void*)r);
                     if (res<0){
                         log_err("fd:%d 添加写线程失败",r->event_fd);
                     }

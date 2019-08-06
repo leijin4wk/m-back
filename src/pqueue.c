@@ -165,38 +165,6 @@ pqueue_insert(pqueue_t *q, void *d)
     return 0;
 }
 
-
-void
-pqueue_change_priority(pqueue_t *q,
-                       pqueue_pri_t new_pri,
-                       void *d)
-{
-    size_t posn;
-    pqueue_pri_t old_pri = q->getpri(d);
-
-    q->setpri(d, new_pri);
-    posn = q->getpos(d);
-    if (q->cmppri(old_pri, new_pri))
-        bubble_up(q, posn);
-    else
-        percolate_down(q, posn);
-}
-
-
-int
-pqueue_remove(pqueue_t *q, void *d)
-{
-    size_t posn = q->getpos(d);
-    q->d[posn] = q->d[--q->size];
-    if (q->cmppri(q->getpri(d), q->getpri(q->d[posn])))
-        bubble_up(q, posn);
-    else
-        percolate_down(q, posn);
-
-    return 0;
-}
-
-
 void *
 pqueue_pop(pqueue_t *q)
 {
@@ -224,23 +192,6 @@ pqueue_peek(pqueue_t *q)
 }
 
 
-void
-pqueue_dump(pqueue_t *q,
-            FILE *out,
-            pqueue_print_entry_f print)
-{
-    int i;
-
-    fprintf(stdout,"posn\tleft\tright\tparent\tmaxchild\t...\n");
-    for (i = 1; i < q->size ;i++) {
-        fprintf(stdout,
-                "%d\t%d\t%d\t%d\t%ul\t",
-                i,
-                left(i), right(i), parent(i),
-                (unsigned int)maxchild(q, i));
-        print(out, q->d[i]);
-    }
-}
 
 
 static void
@@ -257,53 +208,4 @@ set_pri(void *d, pqueue_pri_t pri)
 }
 
 
-void
-pqueue_print(pqueue_t *q,
-             FILE *out,
-             pqueue_print_entry_f print)
-{
-    pqueue_t *dup;
-	void *e;
 
-    dup = pqueue_init(q->size,
-                      q->cmppri, q->getpri, set_pri,
-                      q->getpos, set_pos);
-    dup->size = q->size;
-    dup->avail = q->avail;
-    dup->step = q->step;
-
-    memcpy(dup->d, q->d, (q->size * sizeof(void *)));
-
-    while ((e = pqueue_pop(dup)))
-		print(out, e);
-
-    pqueue_free(dup);
-}
-
-
-static int
-subtree_is_valid(pqueue_t *q, int pos)
-{
-    if (left(pos) < q->size) {
-        /* has a left child */
-        if (q->cmppri(q->getpri(q->d[pos]), q->getpri(q->d[left(pos)])))
-            return 0;
-        if (!subtree_is_valid(q, left(pos)))
-            return 0;
-    }
-    if (right(pos) < q->size) {
-        /* has a right child */
-        if (q->cmppri(q->getpri(q->d[pos]), q->getpri(q->d[right(pos)])))
-            return 0;
-        if (!subtree_is_valid(q, right(pos)))
-            return 0;
-    }
-    return 1;
-}
-
-
-int
-pqueue_is_valid(pqueue_t *q)
-{
-    return subtree_is_valid(q, 1);
-}

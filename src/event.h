@@ -7,6 +7,7 @@
 #include <sys/epoll.h>
 #include <openssl/ssl.h>
 #include "buffer.h"
+#include "timer.h"
 //最大同时处理事件数
 #define MAXEVENTS 1024
 
@@ -25,6 +26,9 @@ struct http_client{
     struct Buffer* request_data;
     struct http_response *response;
     struct Buffer* response_data;
+    //记录client的最后一次操作毫秒数
+    size_t    last_update_time;
+    struct timer_node_t *timer;
     void (*handler)(struct http_request *request,struct http_request *response);
 };
 void ev_loop_init();

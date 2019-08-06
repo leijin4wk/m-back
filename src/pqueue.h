@@ -48,11 +48,6 @@ typedef int (*pqueue_cmp_pri_f)(pqueue_pri_t next, pqueue_pri_t curr);
 typedef size_t (*pqueue_get_pos_f)(void *a);
 typedef void (*pqueue_set_pos_f)(void *a, size_t pos);
 
-
-/** debug callback function to print a entry */
-typedef void (*pqueue_print_entry_f)(FILE *out, void *a);
-
-
 /** the priority queue handle */
 typedef struct pqueue_t
 {
@@ -116,33 +111,11 @@ int pqueue_insert(pqueue_t *q, void *d);
 
 
 /**
- * move an existing entry to a different priority
- * @param q the queue
- * @param new_pri the new priority
- * @param d the entry
- */
-void
-pqueue_change_priority(pqueue_t *q,
-                       pqueue_pri_t new_pri,
-                       void *d);
-
-
-/**
  * pop the highest-ranking item from the queue.
  * @param q the queue
  * @return NULL on error, otherwise the entry
  */
 void *pqueue_pop(pqueue_t *q);
-
-
-/**
- * remove an item from the queue.
- * @param q the queue
- * @param d the entry
- * @return 0 on success
- */
-int pqueue_remove(pqueue_t *q, void *d);
-
 
 /**
  * access highest-ranking item without removing it.
@@ -151,42 +124,6 @@ int pqueue_remove(pqueue_t *q, void *d);
  */
 void *pqueue_peek(pqueue_t *q);
 
-
-/**
- * print the queue
- * @internal
- * DEBUG function only
- * @param q the queue
- * @param out the output handle
- * @param the callback function to print the entry
- */
-void
-pqueue_print(pqueue_t *q, 
-             FILE *out,
-             pqueue_print_entry_f print);
-
-
-/**
- * dump the queue and it's internal structure
- * @internal
- * debug function only
- * @param q the queue
- * @param out the output handle
- * @param the callback function to print the entry
- */
-void
-pqueue_dump(pqueue_t *q, 
-             FILE *out,
-             pqueue_print_entry_f print);
-
-
-/**
- * checks that the pq is in the right order, etc
- * @internal
- * debug function only
- * @param q the queue
- */
-int pqueue_is_valid(pqueue_t *q);
 
 
 #endif /* PQUEUE_H */
