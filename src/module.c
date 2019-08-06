@@ -11,7 +11,6 @@
 extern cJSON *json_config;
 map_void_t dispatcher_map;
 map_void_t module_map;
-typedef int(* test_handler)(int, int); // 定义函数指针类型的别名
 static void load_api_by_json(char* module_name,char* module_path,cJSON* api_arr, int arr_size);
 void load_and_init_module(){
     map_init(&dispatcher_map);
