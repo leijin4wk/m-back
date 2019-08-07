@@ -100,7 +100,9 @@ void ev_loop_start(){
     while (flag) {
         //获取最小超时时间
         time=find_timer();
+        log_info("events timeout :%d",time);
         n = epoll_wait(e_pool_fd, events, MAXEVENTS, time);
+        log_info("events:%d",n);
         //处理超时事件
         handle_expire_timers(handle_expire_timers_call_back);
         for (i = 0; i < n; i++) {
@@ -117,6 +119,7 @@ void ev_loop_start(){
                 }
                 else if(events[i].events&EPOLLIN )//有数据可读，写socket
                 {
+                    log_info("ev_read_callback !");
                     ev_read_callback(r);
 //                  int res= thpool_add_work(read_thread_pool, ev_read_callback,(void*)r);
 //                  if (res<0){
@@ -124,6 +127,7 @@ void ev_loop_start(){
 //                  }
                 }else if(events[i].events&EPOLLOUT) //有数据待发送，写socket
                 {
+                    log_info("ev_write_callback !");
                     ev_write_callback(r);
 //                    int res=  thpool_add_work(write_thread_pool, ev_write_callback,(void*)r);
 //                    if (res<0){

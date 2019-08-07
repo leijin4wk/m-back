@@ -102,8 +102,10 @@ void ev_read_callback(void *watcher) {
         }
         //删除老节点
         delete_timer(client,delete_timer_call_back);
+        log_info("delete_timer success!");
         //创建新节点
         add_timer(client,add_timer_call_back);
+        log_info("add_timer success!");
         event.data.ptr = (void *) client;
         event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
         int rc = epoll_ctl(client->e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
@@ -114,6 +116,7 @@ void ev_read_callback(void *watcher) {
                 free_http_client(client);
             }
         }
+        log_info("add event success!");
         return;
     }
     log_info("当前读取fd为：%d", client->event_fd);

@@ -60,8 +60,9 @@ int find_timer(){
 }
 
 void add_timer(void* value,void (*call_back)(void*, struct timer_node_t *)){
+    log_info("add_timer start!");
     int rc;
-    void (*function)(void*,struct timer_node_t*)=call_back;
+    void (*function)(void*,struct timer_node_t*);
     struct timer_node_t *timer_node = (struct timer_node_t *)malloc(sizeof(struct timer_node_t));
     if(timer_node==NULL){
         log_err("timer_node malloc fail!");
@@ -74,9 +75,10 @@ void add_timer(void* value,void (*call_back)(void*, struct timer_node_t *)){
         log_err("pqueue_insert fail!");
         exit(1);
     }
+    function=call_back;
     function(value,timer_node);
-
     pthread_mutex_unlock(&timer_mutex);
+    log_info("add_timer end!");
 }
 void handle_expire_timers(void (*call_back)(struct timer_node_t *)){
     log_info("handle_expire_timers start!");
@@ -93,6 +95,7 @@ void handle_expire_timers(void (*call_back)(struct timer_node_t *)){
         function(timer_node);
 
         if (timer_node->pri > current_time_millis) {
+            pthread_mutex_unlock(&timer_mutex);
             return;
         }
     }
