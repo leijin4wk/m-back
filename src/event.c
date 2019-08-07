@@ -120,19 +120,19 @@ void ev_loop_start(){
                 else if(events[i].events&EPOLLIN )//有数据可读，写socket
                 {
                     log_info("ev_read_callback !");
-                    ev_read_callback(r);
-//                  int res= thpool_add_work(read_thread_pool, ev_read_callback,(void*)r);
-//                  if (res<0){
-//                      log_err("fd:%d 添加读线程失败",r->event_fd);
-//                  }
+//                    ev_read_callback(r);
+                  int res= thpool_add_work(read_thread_pool, ev_read_callback,(void*)r);
+                  if (res<0){
+                      log_err("fd:%d 添加读线程失败",r->event_fd);
+                  }
                 }else if(events[i].events&EPOLLOUT) //有数据待发送，写socket
                 {
                     log_info("ev_write_callback !");
-                    ev_write_callback(r);
-//                    int res=  thpool_add_work(write_thread_pool, ev_write_callback,(void*)r);
-//                    if (res<0){
-//                        log_err("fd:%d 添加写线程失败",r->event_fd);
-//                    }
+//                    ev_write_callback(r);
+                    int res=  thpool_add_work(write_thread_pool, ev_write_callback,(void*)r);
+                    if (res<0){
+                        log_err("fd:%d 添加写线程失败",r->event_fd);
+                    }
                 }else{
                     log_err("未知的事件:%d",events[i].events);
                 }
