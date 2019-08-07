@@ -38,7 +38,7 @@ int find_timer(){
     struct timer_node_t *timer_node;
     int time = -1;
     pthread_mutex_lock(&timer_mutex);
-    while (p_queue_size(time_pq)>0) {
+    while (p_queue_size(time_pq)>1) {
         time_update();
         timer_node = (struct timer_node_t *)p_queue_peek(time_pq);
         if(timer_node==NULL){
@@ -51,10 +51,11 @@ int find_timer(){
         }
 
         time = (int) (timer_node->pri - current_time_millis);
-        time = (time > 0? time: 0);
+        time = (time > 0? time: -1);
         break;
     }
     pthread_mutex_unlock(&timer_mutex);
+    log_info("time: %d",time);
     return time;
 }
 
@@ -78,9 +79,11 @@ void add_timer(void* value,void (*call_back)(void*, struct timer_node_t *)){
     pthread_mutex_unlock(&timer_mutex);
 }
 void handle_expire_timers(void (*call_back)(struct timer_node_t *)){
+    log_info("handle_expire_timers start!");
     void (*function)(struct timer_node_t*)=call_back;
     pthread_mutex_lock(&timer_mutex);
-    while (p_queue_size(time_pq)>0) {
+    while (p_queue_size(time_pq)>1) {
+        log_info("handle_expire_timers loop!");
         time_update();
         struct timer_node_t * timer_node = (struct timer_node_t *)(p_queue_peek(time_pq));
         if(timer_node==NULL){
@@ -88,11 +91,13 @@ void handle_expire_timers(void (*call_back)(struct timer_node_t *)){
             exit(1);
         }
         function(timer_node);
+
         if (timer_node->pri > current_time_millis) {
             return;
         }
     }
     pthread_mutex_unlock(&timer_mutex);
+    log_info("handle_expire_timers end!");
 }
 
 void delete_timer(void* value,void (*call_back)(void*)){

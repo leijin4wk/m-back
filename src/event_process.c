@@ -93,6 +93,7 @@ void ev_read_callback(void *watcher) {
         if (res < 0) {
             log_err("create_ssl fail!");
             free_http_client(client);
+            return;
         } else if (res == 0) {
             client->ssl_connect_flag = 0;
         } else {
