@@ -20,6 +20,7 @@ struct timer_node_t
     void *value;
 };
 void timer_init();
+void time_update();
 int find_timer();
 void add_timer(void* value,void (*call_back)(void*, struct timer_node_t *));
 void delete_timer(void* value,void (*call_back)(void* value));

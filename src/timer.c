@@ -12,8 +12,6 @@ pqueue_t *time_pq;
 //用来操作优先级队列的互斥锁
 static pthread_mutex_t timer_mutex;
 
-static void time_update();
-
 static int cmp_pri(pqueue_pri_t next, pqueue_pri_t curr);
 
 static pqueue_pri_t get_pri(void *a);
@@ -92,12 +90,12 @@ void handle_expire_timers(void (*call_back)(struct timer_node_t *)){
             log_err("timer_node malloc fail!");
             exit(1);
         }
-        function(timer_node);
-
         if (timer_node->pri > current_time_millis) {
             pthread_mutex_unlock(&timer_mutex);
             return;
         }
+        log_info("%ld    %ld",(long)timer_node->pri,current_time_millis);
+        function(timer_node);
     }
     pthread_mutex_unlock(&timer_mutex);
     log_info("handle_expire_timers end!");
@@ -111,7 +109,7 @@ void delete_timer(void* value,void (*call_back)(void*)){
 
 
 
-static void time_update(){
+void time_update(){
     // there is only one thread calling zv_time_update, no need to lock?
     struct timeval tv;
     int rc;

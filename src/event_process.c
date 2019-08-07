@@ -60,6 +60,7 @@ void ev_accept_callback(struct m_event *watcher) {
     struct epoll_event event;
     struct http_client *client = new_http_client();
     //更新最后更新时间
+    time_update();
     client->last_update_time = current_time_millis;
     add_timer(client,add_timer_call_back);
     char *ip = inet_ntoa(in_addr.sin_addr);
