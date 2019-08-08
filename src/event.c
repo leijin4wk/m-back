@@ -26,14 +26,15 @@ static int handle_expire_timers_call_back(struct timer_node_t *node);
 
 static int handle_expire_timers_call_back(struct timer_node_t *node) {
     struct http_client *http_client = (struct http_client *) node->value;
+    log_info("%d ,%d" ,node->pri,http_client->last_update_time);
     if (node->deleted) {
         log_info("超时删除timer节点: %ld",node->pri);
         p_queue_pop(time_pq);
         node->value=NULL;
         free(node);
         //如果客户端最后更新时间超过超时，删除客户端
-        if (current_time_millis - http_client->last_update_time > TIMEOUT_DEFAULT*2) {
-            log_info("释放客户端fd: %d ,ip:%s",http_client->event_fd,http_client->client_ip);
+        if (current_time_millis - http_client->last_update_time > TIMEOUT_DEFAULT*2&&http_client->ssl!=NULL) {
+            log_info("释放客户端fd:%d ip:%s",http_client->event_fd,http_client->client_ip);
             free_http_client(http_client);
         }
         return -1;
@@ -121,14 +122,12 @@ void ev_loop_start(){
                 }
                 else if(events[i].events&EPOLLIN )//有数据可读，写socket
                 {
-                    log_info("ev_read_callback !");
                   int res= thpool_add_work(read_thread_pool, ev_read_callback,(void*)r);
                   if (res<0){
                       log_err("fd:%d 添加读线程失败",r->event_fd);
                   }
                 }else if(events[i].events&EPOLLOUT) //有数据待发送，写socket
                 {
-                    log_info("ev_write_callback !");
                     int res=  thpool_add_work(write_thread_pool, ev_write_callback,(void*)r);
                     if (res<0){
                         log_err("fd:%d 添加写线程失败",r->event_fd);

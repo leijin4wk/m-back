@@ -32,6 +32,7 @@ static void process_http(struct http_client *client);
 static void add_timer_call_back(void *client, struct timer_node_t *node) {
     struct http_client *http_client = (struct http_client *) client;
     log_info("add timer http fd :%d", http_client->event_fd);
+    log_info("size queue :%d", p_queue_size(time_pq));
     http_client->timer = node;
 }
 
@@ -59,7 +60,6 @@ void ev_accept_callback(struct m_event *watcher) {
     }
     struct epoll_event event;
     struct http_client *client = new_http_client();
-    //#######
     char *ip = inet_ntoa(in_addr.sin_addr);
     alloc_cpy(client->client_ip, ip, strlen(ip))
     client->event_fd = in_fd;
@@ -111,18 +111,17 @@ void ev_read_callback(void *watcher) {
             rc = epoll_ctl(client->e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
             if (rc != 0) {
                 log_err("add epool fail!");
-                free_http_client(client);
             }
         }
-        log_info("add event success!");
         return;
     }
-    log_info("当前读取fd为：%d", client->event_fd);
     struct Buffer *read_buff = new_buffer(MAX_LINE, MAX_REQUEST_SIZE);
+    if (client->ssl==NULL){
+        return;
+    }
     int res = ssl_read_buffer(client->ssl, read_buff);
     if (res < 0) {
         log_err("当前出错fd为：%d", client->event_fd);
-        free_http_client(client);
         return;
     }
     client->request_data = read_buff;
@@ -145,16 +144,13 @@ void ev_read_callback(void *watcher) {
         rc = epoll_ctl(client->e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
         if (rc != 0) {
             log_err("add epool fail!");
-            free_http_client(client);
         }
     }
-    log_info("fd %d request read complete!", client->event_fd);
 }
 
 void ev_write_callback(void *watcher) {
     int res = 0;
     struct http_client *client = (struct http_client *) watcher;
-    log_info("当前写fd为：%d", client->event_fd);
     struct http_header *header = add_http_response_header(client->response);
     header->name = strdup("Content-Length");
     if (client->response->data_type == DYNAMIC_DATA) {
@@ -167,17 +163,18 @@ void ev_write_callback(void *watcher) {
         header->value = length;
     }
     struct Buffer *read_buff = create_http_response_buffer(client->response);
+    if (client->ssl==NULL){
+        return;
+    }
     res = ssl_write_buffer(client->ssl, read_buff);
     if (res < 0) {
         log_err("ssl_write_buffer fail!");
-        free_http_client(client);
         return;
     }
     if (client->response->data_type == STATIC_DATA) {
         res = ssl_write_file(client->ssl, client->response->real_file_path, client->response->real_file_size);
         if (res < 0) {
             log_err("ssl_write_file fail!");
-            free_http_client(client);
             return;
         }
     }
@@ -195,10 +192,8 @@ void ev_write_callback(void *watcher) {
         rc = epoll_ctl(client->e_pool_fd, EPOLL_CTL_MOD, client->event_fd, &event);
         if (rc != 0) {
             log_err("epoll_write MOD fail!");
-            free_http_client(client);
         }
     }
-    log_info("fd %d response write complete!", client->event_fd);
 }
 
 struct http_client *new_http_client() {
@@ -225,12 +220,10 @@ void free_http_client(struct http_client *client) {
     if (client->response != NULL) { delete_http_response(client->response); client->response=NULL;}
     if (client->request_data != NULL) { free_buffer(client->request_data); client->request_data=NULL;}
     client->timer=NULL;
-    epoll_ctl(client->e_pool_fd,)
+    epoll_ctl(client->e_pool_fd,EPOLL_CTL_DEL,client->event_fd,NULL);
     close(client->event_fd);
     client->event_fd=-1;
     free(client);
-
-    client = NULL;
 }
 
 static void process_http(struct http_client *client) {
