@@ -27,17 +27,22 @@ static int handle_expire_timers_call_back(struct timer_node_t *node);
 static int handle_expire_timers_call_back(struct timer_node_t *node) {
     struct http_client *http_client = (struct http_client *) node->value;
     if (node->deleted) {
+        log_info("超时删除timer节点: %ld",node->pri);
         p_queue_pop(time_pq);
         free(node);
         //如果客户端最后更新时间超过超时，删除客户端
-        if (current_time_millis - http_client->last_update_time > TIMEOUT_DEFAULT) {
+        if (current_time_millis - http_client->last_update_time > TIMEOUT_DEFAULT*2) {
+            log_info("释放客户端fd: %d ,ip:%s",http_client->event_fd,http_client->client_ip);
             free_http_client(http_client);
         }
+        return -1;
     }
     //如果客户端最后更新时间超过5倍超时，删除客户端
-    if (current_time_millis - http_client->last_update_time > TIMEOUT_DEFAULT *10) {
+    if (current_time_millis - http_client->last_update_time > TIMEOUT_DEFAULT *2) {
         node->deleted=1;
+        return -1;
     }
+    return 1;
 
 }
 static struct m_event* new_m_event(){
@@ -98,7 +103,6 @@ void ev_loop_start(){
     while (flag) {
         //获取最小超时时间
         time=find_timer(handle_expire_timers_call_back);
-        log_info("events timeout :%d",time);
         n = epoll_wait(e_pool_fd, events, MAXEVENTS, time);
         //处理超时事件
         handle_expire_timers(handle_expire_timers_call_back);

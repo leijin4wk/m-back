@@ -21,7 +21,9 @@ int total_clients = 1;
 extern map_void_t dispatcher_map;
 extern char *root;
 extern char *index_page;
+
 static void add_timer_call_back(void *client, struct timer_node_t *node);
+
 static void delete_timer_call_back(void *client);
 
 
@@ -29,6 +31,7 @@ static void process_http(struct http_client *client);
 
 static void add_timer_call_back(void *client, struct timer_node_t *node) {
     struct http_client *http_client = (struct http_client *) client;
+    log_info("add timer http fd :%d", http_client->event_fd);
     http_client->timer = node;
 }
 
@@ -37,6 +40,7 @@ static void delete_timer_call_back(void *client) {
     struct timer_node_t *node = (struct timer_node_t *) http_client->timer;
     node->deleted = 1;
 }
+
 void ev_accept_callback(struct m_event *watcher) {
     struct sockaddr_in in_addr;
     socklen_t in_len;
@@ -55,10 +59,6 @@ void ev_accept_callback(struct m_event *watcher) {
     }
     struct epoll_event event;
     struct http_client *client = new_http_client();
-    //#######
-    time_update();
-    client->last_update_time = current_time_millis;
-    add_timer(client,add_timer_call_back);
     //#######
     char *ip = inet_ntoa(in_addr.sin_addr);
     alloc_cpy(client->client_ip, ip, strlen(ip))
@@ -99,8 +99,10 @@ void ev_read_callback(void *watcher) {
         //#######
         time_update();
         client->last_update_time = current_time_millis;
-        delete_timer(client,delete_timer_call_back);
-        add_timer(client,add_timer_call_back);
+        if (client->timer != NULL) {
+            delete_timer(client, delete_timer_call_back);
+        }
+        add_timer(client, add_timer_call_back);
         //#####3#
         event.data.ptr = (void *) client;
         event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
@@ -116,6 +118,9 @@ void ev_read_callback(void *watcher) {
         return;
     }
     log_info("当前读取fd为：%d", client->event_fd);
+    if(client->event_fd==0){
+        log_info("aa");
+    }
     struct Buffer *read_buff = new_buffer(MAX_LINE, MAX_REQUEST_SIZE);
     int res = ssl_read_buffer(client->ssl, read_buff);
     if (res < 0) {
@@ -130,8 +135,10 @@ void ev_read_callback(void *watcher) {
     //#######
     time_update();
     client->last_update_time = current_time_millis;
-    delete_timer(client,delete_timer_call_back);
-    add_timer(client,add_timer_call_back);
+    if (client->timer != NULL) {
+        delete_timer(client, delete_timer_call_back);
+    }
+    add_timer(client, add_timer_call_back);
     //#######
     struct epoll_event event;
     event.data.ptr = (void *) watcher;
@@ -180,8 +187,8 @@ void ev_write_callback(void *watcher) {
     //#######
     time_update();
     client->last_update_time = current_time_millis;
-    delete_timer(client,delete_timer_call_back);
-    add_timer(client,add_timer_call_back);
+    delete_timer(client, delete_timer_call_back);
+    add_timer(client, add_timer_call_back);
     //#######
     struct epoll_event event;
     event.data.ptr = (void *) client;
@@ -196,31 +203,34 @@ void ev_write_callback(void *watcher) {
     }
     log_info("fd %d response write complete!", client->event_fd);
 }
+
 struct http_client *new_http_client() {
     struct http_client *client = malloc(sizeof(struct http_client));
     if (client == NULL) {
         log_err("new http client fail!");
         return NULL;
     }
-    client->client_ip=NULL;
-    client->ssl=NULL;
+    client->client_ip = NULL;
+    client->ssl = NULL;
     client->request = NULL;
     client->request_data = NULL;
     client->response = NULL;
     client->ssl_connect_flag = 0;
-    client->timer=NULL;
+    client->timer = NULL;
     return client;
 }
+
 //不需要释放timer， 因为timer在过期模块中单独释放
 void free_http_client(struct http_client *client) {
-    if(client->client_ip!=NULL) free(client->client_ip);
-    if(client->ssl!=NULL) SSL_free(client->ssl);
-    if(client->request!=NULL) delete_http_request(client->request);
-    if(client->response!=NULL) delete_http_response(client->response);
-    if(client->request_data!=NULL) free_buffer(client->request_data);
+    if (client->client_ip != NULL) { free(client->client_ip); client->client_ip=NULL;}
+    if (client->ssl != NULL) { SSL_free(client->ssl);client->ssl=NULL;}
+    if (client->request != NULL) { delete_http_request(client->request);client->request=NULL; }
+    if (client->response != NULL) { delete_http_response(client->response); client->response=NULL;}
+    if (client->request_data != NULL) { free_buffer(client->request_data); client->request_data=NULL;}
     close(client->event_fd);
+    client->event_fd=-1;
     free(client);
-    client=NULL;
+    client = NULL;
 }
 
 static void process_http(struct http_client *client) {
