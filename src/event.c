@@ -29,6 +29,7 @@ static int handle_expire_timers_call_back(struct timer_node_t *node) {
     if (node->deleted) {
         log_info("超时删除timer节点: %ld",node->pri);
         p_queue_pop(time_pq);
+        node->value=NULL;
         free(node);
         //如果客户端最后更新时间超过超时，删除客户端
         if (current_time_millis - http_client->last_update_time > TIMEOUT_DEFAULT*2) {

@@ -118,9 +118,6 @@ void ev_read_callback(void *watcher) {
         return;
     }
     log_info("当前读取fd为：%d", client->event_fd);
-    if(client->event_fd==0){
-        log_info("aa");
-    }
     struct Buffer *read_buff = new_buffer(MAX_LINE, MAX_REQUEST_SIZE);
     int res = ssl_read_buffer(client->ssl, read_buff);
     if (res < 0) {
@@ -227,9 +224,12 @@ void free_http_client(struct http_client *client) {
     if (client->request != NULL) { delete_http_request(client->request);client->request=NULL; }
     if (client->response != NULL) { delete_http_response(client->response); client->response=NULL;}
     if (client->request_data != NULL) { free_buffer(client->request_data); client->request_data=NULL;}
+    client->timer=NULL;
+    epoll_ctl(client->e_pool_fd,)
     close(client->event_fd);
     client->event_fd=-1;
     free(client);
+
     client = NULL;
 }
 
