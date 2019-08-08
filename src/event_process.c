@@ -29,10 +29,6 @@ static void process_http(struct http_client *client);
 
 static void add_timer_call_back(void *client, struct timer_node_t *node) {
     struct http_client *http_client = (struct http_client *) client;
-    http_client->last_update_time = current_time_millis;
-    node->value = client;
-    node->deleted = 0;
-    node->pri = current_time_millis + TIMEOUT_DEFAULT;
     http_client->timer = node;
 }
 
@@ -59,10 +55,11 @@ void ev_accept_callback(struct m_event *watcher) {
     }
     struct epoll_event event;
     struct http_client *client = new_http_client();
-    //更新最后更新时间
+    //#######
     time_update();
     client->last_update_time = current_time_millis;
     add_timer(client,add_timer_call_back);
+    //#######
     char *ip = inet_ntoa(in_addr.sin_addr);
     alloc_cpy(client->client_ip, ip, strlen(ip))
     client->event_fd = in_fd;
@@ -86,8 +83,6 @@ void ev_accept_callback(struct m_event *watcher) {
 
 void ev_read_callback(void *watcher) {
     struct http_client *client = (struct http_client *) watcher;
-    //更新最后更新时间
-    client->last_update_time = current_time_millis;
     if (client->ssl_connect_flag == 0) {
         struct epoll_event event;
         int res = accept_ssl(client->ssl);
@@ -101,12 +96,12 @@ void ev_read_callback(void *watcher) {
             client->ssl_connect_flag = 1;
             log_info("添加SSL连接:%d ,ip:%s , 当前连接人数%d", client->event_fd, client->client_ip, total_clients++);
         }
-        //删除老节点
+        //#######
+        time_update();
+        client->last_update_time = current_time_millis;
         delete_timer(client,delete_timer_call_back);
-        log_info("delete_timer success!");
-        //创建新节点
         add_timer(client,add_timer_call_back);
-        log_info("add_timer success!");
+        //#####3#
         event.data.ptr = (void *) client;
         event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
         int rc = epoll_ctl(client->e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
@@ -132,10 +127,12 @@ void ev_read_callback(void *watcher) {
     client->request = parser_http_request_buffer(client->request_data);
     //这个是关键方法
     process_http(client);
-    //删除老节点
+    //#######
+    time_update();
+    client->last_update_time = current_time_millis;
     delete_timer(client,delete_timer_call_back);
-    //创建新节点
     add_timer(client,add_timer_call_back);
+    //#######
     struct epoll_event event;
     event.data.ptr = (void *) watcher;
     event.events = EPOLLOUT | EPOLLET | EPOLLONESHOT;
@@ -153,9 +150,6 @@ void ev_read_callback(void *watcher) {
 void ev_write_callback(void *watcher) {
     int res = 0;
     struct http_client *client = (struct http_client *) watcher;
-    //更新最后更新时间
-    client->last_update_time = current_time_millis;
-
     log_info("当前写fd为：%d", client->event_fd);
     struct http_header *header = add_http_response_header(client->response);
     header->name = strdup("Content-Length");
@@ -183,11 +177,12 @@ void ev_write_callback(void *watcher) {
             return;
         }
     }
-    //删除老节点
+    //#######
+    time_update();
+    client->last_update_time = current_time_millis;
     delete_timer(client,delete_timer_call_back);
-    //创建新节点
     add_timer(client,add_timer_call_back);
-
+    //#######
     struct epoll_event event;
     event.data.ptr = (void *) client;
     event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;

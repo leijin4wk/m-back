@@ -21,8 +21,9 @@ struct timer_node_t
 };
 void timer_init();
 void time_update();
-int find_timer();
+int find_timer(int (*call_back)(struct timer_node_t *));
+void handle_expire_timers(int (*call_back)(struct timer_node_t*));
 void add_timer(void* value,void (*call_back)(void*, struct timer_node_t *));
 void delete_timer(void* value,void (*call_back)(void* value));
-void handle_expire_timers(void (*call_back)(struct timer_node_t*));
+
 #endif //M_BACK_TIMER_H

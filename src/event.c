@@ -22,9 +22,9 @@ int e_pool_fd;
 static int socket_accept_fd;
 
 static struct m_event* new_m_event();
-static void handle_expire_timers_call_back(struct timer_node_t *node);
+static int handle_expire_timers_call_back(struct timer_node_t *node);
 
-static void handle_expire_timers_call_back(struct timer_node_t *node) {
+static int handle_expire_timers_call_back(struct timer_node_t *node) {
     struct http_client *http_client = (struct http_client *) node->value;
     if (node->deleted) {
         p_queue_pop(time_pq);
@@ -97,7 +97,7 @@ void ev_loop_start(){
     int flag=1;
     while (flag) {
         //获取最小超时时间
-        time=find_timer();
+        time=find_timer(handle_expire_timers_call_back);
         log_info("events timeout :%d",time);
         n = epoll_wait(e_pool_fd, events, MAXEVENTS, time);
         //处理超时事件
