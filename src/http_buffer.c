@@ -8,10 +8,10 @@
 #include "ssl_tool.h"
 #include "http_buffer.h"
 #include "str_tool.h"
-static struct http_request *new_http_request();
-static void delete_http_request(struct http_request *request);
+
 static struct http_header *new_http_header();
 static void delete_http_header(struct http_header *header);
+static void delete_http_param(struct http_param *param);
 static inline struct http_header *add_http_request_header(struct http_request *request);
 static int on_message_begin(http_parser* parser);
 static int on_url(http_parser* parser, const char* at, size_t length);
@@ -49,19 +49,55 @@ struct http_request *new_http_request() {
     return request;
 }
 // 删除一个HTTP请求
-static  void delete_http_request(struct http_request *request) {
+void delete_http_request(struct http_request *request) {
     if (request->url != NULL) free(request->url);
     if (request->body != NULL) free(request->body);
+    if (request->query_str!=NULL) free(request->query_str);
     struct http_header *header = request->headers;
     while (header != NULL) {
         struct http_header *to_delete = header;
         header = header->next;
         delete_http_header(to_delete);
     }
+    struct http_param *param = request->query_param;
+    while (param != NULL) {
+        struct http_param *to_delete = param;
+        param = param->next;
+        delete_http_param(to_delete);
+    }
     free(request);
+    request=NULL;
+}
+//初始化一个response相应
+struct http_response *new_http_response() {
+    struct http_response *response = malloc(sizeof(struct http_response));
+    response->http_major = 1;
+    response->http_minor = 1;
+    response->code = 200;
+    response->headers = NULL;
+    response->body = NULL;
+    response->real_file_path = NULL;
+    response->data_type = -1;
+    struct http_header *header = add_http_response_header(response);
+    header->name = strdup("Server");
+    header->value = strdup("LeiJin/m_back");
+    return response;
+}
+//删除一个response
+void delete_http_response(struct http_response * response){
+    if (response->body != NULL) free(response->body);
+    if (response->real_file_path != NULL) free(response->real_file_path);
+    struct http_header *header = response->headers;
+    while (header != NULL) {
+        struct http_header *to_delete = header;
+        header = header->next;
+        delete_http_header(to_delete);
+    }
+    free(response);
+    response=NULL;
 }
 // 初始化一个新的头结点
-static struct http_header *new_http_header() {
+struct http_header *new_http_header() {
     struct http_header *header = malloc(sizeof(struct http_header));
     header->name = NULL;
     header->value = NULL;

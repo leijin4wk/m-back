@@ -23,7 +23,7 @@ extern char *root;
 extern char *index_page;
 static void add_timer_call_back(void *client, struct timer_node_t *node);
 static void delete_timer_call_back(void *client);
-static struct http_response *new_http_response();
+
 
 static void process_http(struct http_client *client);
 
@@ -201,37 +201,31 @@ void ev_write_callback(void *watcher) {
     }
     log_info("fd %d response write complete!", client->event_fd);
 }
-
 struct http_client *new_http_client() {
     struct http_client *client = malloc(sizeof(struct http_client));
     if (client == NULL) {
         log_err("new http client fail!");
         return NULL;
     }
-    client->response = NULL;
+    client->client_ip=NULL;
+    client->ssl=NULL;
     client->request = NULL;
     client->request_data = NULL;
+    client->response = NULL;
     client->ssl_connect_flag = 0;
+    client->timer=NULL;
     return client;
 }
-
+//不需要释放timer， 因为timer在过期模块中单独释放
 void free_http_client(struct http_client *client) {
-    //todo
-}
-
-static struct http_response *new_http_response(struct http_request *request) {
-    struct http_response *response = malloc(sizeof(struct http_response));
-    response->body = NULL;
-    response->http_major = request->http_major;
-    response->http_minor = request->http_minor;
-    response->code = 200;
-    response->headers = NULL;
-    response->real_file_path = NULL;
-    response->data_type = -1;
-    struct http_header *header = add_http_response_header(response);
-    header->name = strdup("Server");
-    header->value = strdup("LeiJin/m_back");
-    return response;
+    if(client->client_ip!=NULL) free(client->client_ip);
+    if(client->ssl!=NULL) SSL_free(client->ssl);
+    if(client->request!=NULL) delete_http_request(client->request);
+    if(client->response!=NULL) delete_http_response(client->response);
+    if(client->request_data!=NULL) free_buffer(client->request_data);
+    close(client->event_fd);
+    free(client);
+    client=NULL;
 }
 
 static void process_http(struct http_client *client) {
@@ -240,7 +234,7 @@ static void process_http(struct http_client *client) {
     void (*function)(struct http_request *, struct http_response *);
     int flag = 0;
     buffer_add(filename, root, strlen(root));
-    client->response = new_http_response(client->request);
+    client->response = new_http_response();
     if (check_http_request_header_value(client->request, "Upgrade-Insecure-Requests", "1")) {
         struct http_header *header = add_http_response_header(client->response);
         header->name = strdup("Content-Security-Policy");

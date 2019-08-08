@@ -33,14 +33,12 @@ static void handle_expire_timers_call_back(struct timer_node_t *node) {
         if (current_time_millis - http_client->last_update_time > TIMEOUT_DEFAULT) {
             free_http_client(http_client);
         }
-    } else {
-        //如果客户端最后更新时间超过5倍超时，删除客户端
-        if (current_time_millis - http_client->last_update_time > TIMEOUT_DEFAULT * 5) {
-            struct timer_node_t *top = p_queue_pop(time_pq);
-            free(top);
-            free_http_client(http_client);
-        }
     }
+    //如果客户端最后更新时间超过5倍超时，删除客户端
+    if (current_time_millis - http_client->last_update_time > TIMEOUT_DEFAULT *10) {
+        node->deleted=1;
+    }
+
 }
 static struct m_event* new_m_event(){
     struct m_event *event=malloc(sizeof(struct m_event));

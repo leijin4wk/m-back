@@ -24,6 +24,7 @@ void free_buffer(struct Buffer *buf)
         free(buf->orig);
         free(buf);
     }
+    buf=NULL;
 }
 
 void buffer_reset(struct Buffer *buf)
