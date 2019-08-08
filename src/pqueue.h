@@ -112,17 +112,6 @@ size_t p_queue_size(pqueue_t *q);
 int p_queue_insert(pqueue_t *q, void *d);
 
 
-/**
- * move an existing entry to a different priority
- * @param q the queue
- * @param new_pri the new priority
- * @param d the entry
- */
-void
-p_queue_change_priority(pqueue_t *q,
-                       pqueue_pri_t new_pri,
-                       void *d);
-
 
 /**
  * pop the highest-ranking item from the queue.
@@ -132,13 +121,6 @@ p_queue_change_priority(pqueue_t *q,
 void *p_queue_pop(pqueue_t *q);
 
 
-/**
- * remove an item from the queue.
- * @param q the queue
- * @param d the entry
- * @return 0 on success
- */
-int p_queue_remove(pqueue_t *q, void *d);
 
 
 /**
@@ -147,16 +129,6 @@ int p_queue_remove(pqueue_t *q, void *d);
  * @return NULL on error, otherwise the entry
  */
 void *p_queue_peek(pqueue_t *q);
-
-
-
-/**
- * checks that the pq is in the right order, etc
- * @internal
- * debug function only
- * @param q the queue
- */
-int p_queue_is_valid(pqueue_t *q);
 
 
 #endif /* PQUEUE_H */

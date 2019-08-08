@@ -165,38 +165,6 @@ p_queue_insert(pqueue_t *q, void *d)
     return 0;
 }
 
-
-void
-p_queue_change_priority(pqueue_t *q,
-                       pqueue_pri_t new_pri,
-                       void *d)
-{
-    size_t posn;
-    pqueue_pri_t old_pri = q->getpri(d);
-
-    q->setpri(d, new_pri);
-    posn = q->getpos(d);
-    if (q->cmppri(old_pri, new_pri))
-        bubble_up(q, posn);
-    else
-        percolate_down(q, posn);
-}
-
-
-int
-p_queue_remove(pqueue_t *q, void *d)
-{
-    size_t posn = q->getpos(d);
-    q->d[posn] = q->d[--q->size];
-    if (q->cmppri(q->getpri(d), q->getpri(q->d[posn])))
-        bubble_up(q, posn);
-    else
-        percolate_down(q, posn);
-
-    return 0;
-}
-
-
 void *
 p_queue_pop(pqueue_t *q)
 {
@@ -237,29 +205,4 @@ set_pri(void *d, pqueue_pri_t pri)
     /* do nothing */
 }
 
-static int
-subtree_is_valid(pqueue_t *q, int pos)
-{
-    if (left(pos) < q->size) {
-        /* has a left child */
-        if (q->cmppri(q->getpri(q->d[pos]), q->getpri(q->d[left(pos)])))
-            return 0;
-        if (!subtree_is_valid(q, left(pos)))
-            return 0;
-    }
-    if (right(pos) < q->size) {
-        /* has a right child */
-        if (q->cmppri(q->getpri(q->d[pos]), q->getpri(q->d[right(pos)])))
-            return 0;
-        if (!subtree_is_valid(q, right(pos)))
-            return 0;
-    }
-    return 1;
-}
 
-
-int
-p_queue_is_valid(pqueue_t *q)
-{
-    return subtree_is_valid(q, 1);
-}
