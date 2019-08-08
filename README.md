@@ -30,7 +30,7 @@ apt-get install libssl-dev
 3.epool的应用
 
 
-4.so动态模块的加载和执行（模仿servlet
+4.so动态模块的加载和执行（模仿java web servlet)
 
 
 5.静态文件的读写（mmap实现）（因为不知道sendfile系统调用在ssl下的处理，只能退而求其次）
