@@ -23,8 +23,6 @@ endif()
 set(CMAKE_C_FLAGS  "-Wl,-E")
 MESSAGE(STATUS "${CMAKE_C_FLAGS}")
 
-##包含zdb头文件
-include_directories(/usr/include/zdb)
 ##包含自己的头文件
 include_directories(./include)
 # 查找目录下的所有源文件，并将名称保存到 DIR_SRCS 变量
