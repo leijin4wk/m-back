@@ -90,7 +90,7 @@ void handle_expire_timers(void (*call_back)(struct timer_node_t *)){
             log_err("timer_node malloc fail!");
             exit(1);
         }
-        if (timer_node->pri > current_time_millis) {
+        if (timer_node->pri >= current_time_millis) {
             pthread_mutex_unlock(&timer_mutex);
             return;
         }else{
