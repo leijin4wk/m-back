@@ -93,6 +93,8 @@ void handle_expire_timers(void (*call_back)(struct timer_node_t *)){
         if (timer_node->pri > current_time_millis) {
             pthread_mutex_unlock(&timer_mutex);
             return;
+        }else{
+            timer_node->deleted=1;
         }
         log_info("%ld    %ld",(long)timer_node->pri,current_time_millis);
         function(timer_node);
