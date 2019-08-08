@@ -26,7 +26,7 @@ static int handle_expire_timers_call_back(struct timer_node_t *node);
 
 static int handle_expire_timers_call_back(struct timer_node_t *node) {
     struct http_client *http_client = (struct http_client *) node->value;
-    log_info("%d ,%d" ,node->pri,http_client->last_update_time);
+
     if (node->deleted) {
         log_info("超时删除timer节点: %ld",node->pri);
         p_queue_pop(time_pq);
@@ -40,6 +40,7 @@ static int handle_expire_timers_call_back(struct timer_node_t *node) {
         return -1;
     }
     //如果客户端最后更新时间超过5倍超时，删除客户端
+    log_info("%d ,%d" ,node->pri,http_client->last_update_time);
     if (current_time_millis - http_client->last_update_time > TIMEOUT_DEFAULT *2) {
         node->deleted=1;
         return -1;
