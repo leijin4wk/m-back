@@ -79,7 +79,6 @@ void add_timer(void* value,void (*call_back)(void*, struct timer_node_t *)){
     log_info("add_timer end!");
 }
 void handle_expire_timers(void (*call_back)(struct timer_node_t *)){
-    log_info("handle_expire_timers start!");
     void (*function)(struct timer_node_t*)=call_back;
     pthread_mutex_lock(&timer_mutex);
     while (p_queue_size(time_pq)>1) {
@@ -100,7 +99,6 @@ void handle_expire_timers(void (*call_back)(struct timer_node_t *)){
         function(timer_node);
     }
     pthread_mutex_unlock(&timer_mutex);
-    log_info("handle_expire_timers end!");
 }
 
 void delete_timer(void* value,void (*call_back)(void*)){

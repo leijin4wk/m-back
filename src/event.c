@@ -102,7 +102,6 @@ void ev_loop_start(){
         time=find_timer();
         log_info("events timeout :%d",time);
         n = epoll_wait(e_pool_fd, events, MAXEVENTS, time);
-        log_info("events:%d",n);
         //处理超时事件
         handle_expire_timers(handle_expire_timers_call_back);
         for (i = 0; i < n; i++) {

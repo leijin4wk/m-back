@@ -208,12 +208,10 @@ struct http_client *new_http_client() {
         log_err("new http client fail!");
         return NULL;
     }
-
     client->response = NULL;
     client->request = NULL;
     client->request_data = NULL;
     client->ssl_connect_flag = 0;
-    client->response_data = new_buffer(MAX_LINE, MAX_RESPONSE_SIZE);
     return client;
 }
 
