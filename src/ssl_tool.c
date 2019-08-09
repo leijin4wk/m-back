@@ -17,7 +17,6 @@ static int buffer_read_tls(SSL *ssl,struct Buffer *read_buff);
 static int buffer_write_tls(SSL *ssl,struct Buffer *write_buff);
 void  init_server_ctx(void)
 {
-
     cJSON *cert_file_item=cJSON_GetObjectItem(json_config,"cert_file");
     if(cert_file_item==NULL){
         log_err("config file read fail!");
@@ -90,7 +89,6 @@ int accept_ssl(SSL * ssl){
             case SSL_ERROR_WANT_WRITE:
                 return 0;
             default:
-                log_err("SSL_accept(): %s", ssl_errno_s);
                 return -1;
         }
     }
@@ -122,16 +120,13 @@ static int buffer_read_tls(SSL *ssl,struct Buffer *read_buff)
         res = SSL_get_error(ssl, r);
         switch (res) {
             case SSL_ERROR_WANT_READ:
-                log_info("%d,SSL_ERROR_WANT_READ",res);
-                return 0;
             case SSL_ERROR_WANT_WRITE:
-                log_info("%d, SSL_ERROR_WANT_WRITE",res);
+                log_info("%d, SSL_ERROR_WANT_WRITE or SSL_ERROR_WANT_READ",res);
                 return 0;
             case SSL_ERROR_ZERO_RETURN:
-                log_info("%d, SSL_ERROR_ZERO_RETURN",res);
+                //链接正常关闭
                 return -1;
             case SSL_ERROR_SYSCALL:
-                log_info("%d SSL_ERROR_SYSCALL %d error",res,errno);
                 switch (errno) {
                     //EINTR：指操作被中断唤醒，需要重新读/写
                     case EINTR:
@@ -140,7 +135,6 @@ static int buffer_read_tls(SSL *ssl,struct Buffer *read_buff)
                     case EAGAIN:
                         return 0;
                     default:
-                        log_info("default");
                         return -1;
                 }
                 /* FALLTHROUGH */

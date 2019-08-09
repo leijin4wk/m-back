@@ -102,19 +102,15 @@ void ev_accept_callback(struct m_event *watcher) {
 
 void ev_read_callback(void *watcher) {
     struct http_client *client = (struct http_client *) watcher;
+    if (client->timer != NULL) {
+        update_time_pri(client, update_time_pri_call_back);
+    } else {
+        add_timer(client, add_timer_call_back);
+    }
     if (client->ssl_connect_flag == 0) {
         struct epoll_event event;
-
-        if (client->timer != NULL) {
-            update_time_pri(client, update_time_pri_call_back);
-        } else {
-            add_timer(client, add_timer_call_back);
-        }
-
         int res = accept_ssl(client->ssl);
         if (res < 0) {
-            log_err("create_ssl fail!");
-            free_http_client(client);
             return;
         } else if (res == 0) {
             client->ssl_connect_flag = 0;
@@ -140,7 +136,6 @@ void ev_read_callback(void *watcher) {
     }
     int res = ssl_read_buffer(client->ssl, read_buff);
     if (res < 0) {
-        log_err("当前出错fd为：%d", client->event_fd);
         return;
     }
     client->request_data = read_buff;
@@ -202,7 +197,7 @@ void ev_write_callback(void *watcher) {
         }
     }
     update_time_pri(client, update_time_pri_call_back);
-    log_info("fd：%d process success!");
+    log_info("fd：%d process success!",client->event_fd);
 }
 
 struct http_client *new_http_client() {

@@ -5,7 +5,8 @@
 #ifndef M_BACK_TIMER_H
 #define M_BACK_TIMER_H
 #define TIMER_QUEUE_SIZE 10
-#define TIMEOUT_DEFAULT 1000     /* ms */
+#define TIMEOUT_DEFAULT 6000     //http 默认超时时间
+#define DEFAULT_EPOOL 500 //epool wait 默认等待时间
 #include <stddef.h>
 #include "pqueue.h"
 extern size_t current_time_millis;

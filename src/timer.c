@@ -34,7 +34,7 @@ void timer_init() {
 }
 int find_timer(){
     struct timer_node_t *timer_node;
-    int time = TIMEOUT_DEFAULT;
+    int time = DEFAULT_EPOOL;
     pthread_mutex_lock(&timer_mutex);
     if (p_queue_size(time_pq)>0) {
         time_update();
@@ -43,7 +43,7 @@ int find_timer(){
             log_err("pqueue_peek get node fail!");
         }
         time = (int) (timer_node->pri - current_time_millis);
-        time = (time > 0? time: TIMEOUT_DEFAULT);
+        time = (time > 0? time: DEFAULT_EPOOL);
     }
     pthread_mutex_unlock(&timer_mutex);
     return time;
