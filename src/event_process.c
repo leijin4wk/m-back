@@ -68,7 +68,7 @@ void ev_accept_callback(struct m_event *watcher) {
     int in_fd;
     in_len = sizeof(struct sockaddr_in);
     in_fd = accept(watcher->event_fd, (struct sockaddr *) &in_addr, &in_len);
-    if (in_fd < 0) {
+    if (in_fd <= 0) {
         return;
     }
     int flag = set_nonblock(in_fd);

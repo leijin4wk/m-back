@@ -119,7 +119,6 @@ static int buffer_read_tls(SSL *ssl,struct Buffer *read_buff)
     //当前可读的字节数
     r = SSL_read(ssl, buff, MAX_READLINE);
     if (r <= 0) {
-        log_info("%d  r",r);
         res = SSL_get_error(ssl, r);
         switch (res) {
             case SSL_ERROR_WANT_READ:
