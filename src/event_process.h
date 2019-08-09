@@ -7,6 +7,8 @@
 #include "event.h"
 
 #define SHORTLINE   512
+
+extern int total_clients;
 void ev_accept_callback(struct m_event *watcher);
 
 void ev_read_callback(void* watcher);

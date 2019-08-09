@@ -15,7 +15,7 @@
 #include "http_buffer.h"
 #include "str_tool.h"
 
-int total_clients = 1;
+int total_clients = 0;
 
 
 extern map_void_t dispatcher_map;
@@ -24,22 +24,20 @@ extern char *index_page;
 
 static void add_timer_call_back(void *client, struct timer_node_t *node);
 
-static void delete_timer_call_back(void *client);
-
+static struct timer_node_t * update_time_pri_call_back(void *client);
 
 static void process_http(struct http_client *client);
 
 static void add_timer_call_back(void *client, struct timer_node_t *node) {
     struct http_client *http_client = (struct http_client *) client;
-    log_info("add timer http fd :%d", http_client->event_fd);
-    log_info("size queue :%d", p_queue_size(time_pq));
+    http_client->last_update_time=current_time_millis;
     http_client->timer = node;
 }
 
-static void delete_timer_call_back(void *client) {
+static struct timer_node_t * update_time_pri_call_back(void *client){
     struct http_client *http_client = (struct http_client *) client;
-    struct timer_node_t *node = (struct timer_node_t *) http_client->timer;
-    node->deleted = 1;
+    http_client->last_update_time=current_time_millis;
+    return (struct timer_node_t *)http_client->timer;
 }
 
 void ev_accept_callback(struct m_event *watcher) {
@@ -85,6 +83,13 @@ void ev_read_callback(void *watcher) {
     struct http_client *client = (struct http_client *) watcher;
     if (client->ssl_connect_flag == 0) {
         struct epoll_event event;
+
+        if (client->timer != NULL) {
+            update_time_pri(client, update_time_pri_call_back);
+        }else {
+            add_timer(client, add_timer_call_back);
+        }
+
         int res = accept_ssl(client->ssl);
         if (res < 0) {
             log_err("create_ssl fail!");
@@ -94,16 +99,8 @@ void ev_read_callback(void *watcher) {
             client->ssl_connect_flag = 0;
         } else {
             client->ssl_connect_flag = 1;
-            log_info("添加SSL连接:%d ,ip:%s , 当前连接人数%d", client->event_fd, client->client_ip, total_clients++);
+            log_info("添加SSL连接:%d ,ip:%s , 当前连接人数%d", client->event_fd, client->client_ip, ++total_clients);
         }
-        //#######
-        time_update();
-        client->last_update_time = current_time_millis;
-        if (client->timer != NULL) {
-            delete_timer(client, delete_timer_call_back);
-        }
-        add_timer(client, add_timer_call_back);
-        //#####3#
         event.data.ptr = (void *) client;
         event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
         int rc = epoll_ctl(client->e_pool_fd, EPOLL_CTL_ADD, client->event_fd, &event);
@@ -116,6 +113,7 @@ void ev_read_callback(void *watcher) {
         return;
     }
     struct Buffer *read_buff = new_buffer(MAX_LINE, MAX_REQUEST_SIZE);
+    //用来处理httpclient 已经被释放了，但是还是相应了事件
     if (client->ssl==NULL){
         return;
     }
@@ -128,14 +126,6 @@ void ev_read_callback(void *watcher) {
     client->request = parser_http_request_buffer(client->request_data);
     //这个是关键方法
     process_http(client);
-    //#######
-    time_update();
-    client->last_update_time = current_time_millis;
-    if (client->timer != NULL) {
-        delete_timer(client, delete_timer_call_back);
-    }
-    add_timer(client, add_timer_call_back);
-    //#######
     struct epoll_event event;
     event.data.ptr = (void *) watcher;
     event.events = EPOLLOUT | EPOLLET | EPOLLONESHOT;
@@ -146,6 +136,7 @@ void ev_read_callback(void *watcher) {
             log_err("add epool fail!");
         }
     }
+    update_time_pri(client, update_time_pri_call_back);
 }
 
 void ev_write_callback(void *watcher) {
@@ -163,6 +154,7 @@ void ev_write_callback(void *watcher) {
         header->value = length;
     }
     struct Buffer *read_buff = create_http_response_buffer(client->response);
+    //用来处理httpclient 已经被释放了，但是还是相应了事件
     if (client->ssl==NULL){
         return;
     }
@@ -178,12 +170,6 @@ void ev_write_callback(void *watcher) {
             return;
         }
     }
-    //#######
-    time_update();
-    client->last_update_time = current_time_millis;
-    delete_timer(client, delete_timer_call_back);
-    add_timer(client, add_timer_call_back);
-    //#######
     struct epoll_event event;
     event.data.ptr = (void *) client;
     event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
@@ -194,6 +180,7 @@ void ev_write_callback(void *watcher) {
             log_err("epoll_write MOD fail!");
         }
     }
+    update_time_pri(client, update_time_pri_call_back);
 }
 
 struct http_client *new_http_client() {

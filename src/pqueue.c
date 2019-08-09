@@ -179,7 +179,21 @@ p_queue_pop(pqueue_t *q)
 
     return head;
 }
+void
+pqueue_change_priority(pqueue_t *q,
+                       pqueue_pri_t new_pri,
+                       void *d)
+{
+    size_t posn;
+    pqueue_pri_t old_pri = q->getpri(d);
 
+    q->setpri(d, new_pri);
+    posn = q->getpos(d);
+    if (q->cmppri(old_pri, new_pri))
+        bubble_up(q, posn);
+    else
+        percolate_down(q, posn);
+}
 
 void *
 p_queue_peek(pqueue_t *q)

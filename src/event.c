@@ -23,26 +23,15 @@ static int socket_accept_fd;
 
 static struct m_event* new_m_event();
 static int handle_expire_timers_call_back(struct timer_node_t *node);
-
 static int handle_expire_timers_call_back(struct timer_node_t *node) {
     struct http_client *http_client = (struct http_client *) node->value;
-
-    if (node->deleted) {
-        log_info("超时删除timer节点: %ld",node->pri);
+    long a=current_time_millis - node->pri;
+    if (a > TIMEOUT_DEFAULT) {
+        log_info("删除SSL连接:%d ,ip:%s , 当前连接人数%d", http_client->event_fd, http_client->client_ip, --total_clients);
         p_queue_pop(time_pq);
         node->value=NULL;
         free(node);
-        //如果客户端最后更新时间超过超时，删除客户端
-        if (current_time_millis - http_client->last_update_time > TIMEOUT_DEFAULT*2&&http_client->ssl!=NULL) {
-            log_info("释放客户端fd:%d ip:%s",http_client->event_fd,http_client->client_ip);
-            free_http_client(http_client);
-        }
-        return -1;
-    }
-    //如果客户端最后更新时间超过5倍超时，删除客户端
-    log_info("%d ,%d" ,node->pri,http_client->last_update_time);
-    if (current_time_millis - http_client->last_update_time > TIMEOUT_DEFAULT *2) {
-        node->deleted=1;
+        free_http_client(http_client);
         return -1;
     }
     return 1;
@@ -105,7 +94,7 @@ void ev_loop_start(){
     int flag=1;
     while (flag) {
         //获取最小超时时间
-        time=find_timer(handle_expire_timers_call_back);
+        time=find_timer();
         n = epoll_wait(e_pool_fd, events, MAXEVENTS, time);
         //处理超时事件
         handle_expire_timers(handle_expire_timers_call_back);

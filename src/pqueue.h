@@ -121,7 +121,16 @@ int p_queue_insert(pqueue_t *q, void *d);
 void *p_queue_pop(pqueue_t *q);
 
 
-
+/**
+ * move an existing entry to a different priority
+ * @param q the queue
+ * @param new_pri the new priority
+ * @param d the entry
+ */
+void
+pqueue_change_priority(pqueue_t *q,
+                       pqueue_pri_t new_pri,
+                       void *d);
 
 
 

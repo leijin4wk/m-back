@@ -32,24 +32,18 @@ void timer_init() {
     /*互斥初始化*/
     pthread_mutex_init (&timer_mutex, NULL);
 }
-int find_timer(int (*call_back)(struct timer_node_t *)){
-    int (*function)(struct timer_node_t*);
+int find_timer(){
     struct timer_node_t *timer_node;
-    int time = -1;
+    int time = TIMEOUT_DEFAULT;
     pthread_mutex_lock(&timer_mutex);
-    while (p_queue_size(time_pq)>0) {
+    if (p_queue_size(time_pq)>0) {
         time_update();
         timer_node = (struct timer_node_t *)p_queue_peek(time_pq);
         if(timer_node==NULL){
             log_err("pqueue_peek get node fail!");
         }
-        function=call_back;
-        if(function(timer_node)<0){
-            continue;
-        }
         time = (int) (timer_node->pri - current_time_millis);
-        time = (time > 0? time: -1);
-        break;
+        time = (time > 0? time: TIMEOUT_DEFAULT);
     }
     pthread_mutex_unlock(&timer_mutex);
     return time;
@@ -58,13 +52,12 @@ void handle_expire_timers(int (*call_back)(struct timer_node_t *)){
     int (*function)(struct timer_node_t*);
     pthread_mutex_lock(&timer_mutex);
     while (p_queue_size(time_pq)>0) {
-        log_info("handle_expire_timers loop!size:%d",(int)p_queue_size(time_pq));
-        time_update();
         struct timer_node_t * timer_node = (struct timer_node_t *)(p_queue_peek(time_pq));
         if(timer_node==NULL){
             log_err("timer_node malloc fail!");
             exit(1);
         }
+        time_update();
         function=call_back;
         if(function(timer_node)<0){
             continue;
@@ -86,7 +79,6 @@ void add_timer(void* value,void (*call_back)(void*, struct timer_node_t *)){
     }
     pthread_mutex_lock(&timer_mutex);
     time_update();
-    timer_node->deleted = 0;
     timer_node->pri = current_time_millis + TIMEOUT_DEFAULT;
     timer_node->value=value;
     rc = p_queue_insert(time_pq, timer_node);
@@ -99,10 +91,14 @@ void add_timer(void* value,void (*call_back)(void*, struct timer_node_t *)){
     pthread_mutex_unlock(&timer_mutex);
 }
 
-void delete_timer(void* value,void (*call_back)(void*)){
-    void (*function)(void*);
+void update_time_pri(void* value,struct timer_node_t * (*call_back)(void*)){
+    struct timer_node_t * (*function)(void*);
+    pthread_mutex_lock(&timer_mutex);
+    time_update();
     function=call_back;
-    function(value);
+    struct timer_node_t * node=function(value);
+    pqueue_change_priority(time_pq,current_time_millis + TIMEOUT_DEFAULT,node);
+    pthread_mutex_unlock(&timer_mutex);
 }
 
 void time_update(){
