@@ -17,27 +17,48 @@
 
 int total_clients = 0;
 
-
 extern map_void_t dispatcher_map;
 extern char *root;
 extern char *index_page;
 
+mime_type_t mime_type[] =
+        {
+                {".html", "text/html"},
+                {".xml", "text/xml"},
+                {".xhtml", "application/xhtml+xml"},
+                {".txt", "text/plain"},
+                {".rtf", "application/rtf"},
+                {".pdf", "application/pdf"},
+                {".word", "application/msword"},
+                {".png", "image/png"},
+                {".gif", "image/gif"},
+                {".jpg", "image/jpeg"},
+                {".jpeg", "image/jpeg"},
+                {".au", "audio/basic"},
+                {".mpeg", "video/mpeg"},
+                {".mpg", "video/mpeg"},
+                {".avi", "video/x-msvideo"},
+                {".gz", "application/x-gzip"},
+                {".tar", "application/x-tar"},
+                {".css", "text/css"},
+                {NULL, "text/plain"}
+        };
 static void add_timer_call_back(void *client, struct timer_node_t *node);
 
-static struct timer_node_t * update_time_pri_call_back(void *client);
+static struct timer_node_t *update_time_pri_call_back(void *client);
 
 static void process_http(struct http_client *client);
 
 static void add_timer_call_back(void *client, struct timer_node_t *node) {
     struct http_client *http_client = (struct http_client *) client;
-    http_client->last_update_time=current_time_millis;
+    http_client->last_update_time = current_time_millis;
     http_client->timer = node;
 }
 
-static struct timer_node_t * update_time_pri_call_back(void *client){
+static struct timer_node_t *update_time_pri_call_back(void *client) {
     struct http_client *http_client = (struct http_client *) client;
-    http_client->last_update_time=current_time_millis;
-    return (struct timer_node_t *)http_client->timer;
+    http_client->last_update_time = current_time_millis;
+    return (struct timer_node_t *) http_client->timer;
 }
 
 void ev_accept_callback(struct m_event *watcher) {
@@ -86,7 +107,7 @@ void ev_read_callback(void *watcher) {
 
         if (client->timer != NULL) {
             update_time_pri(client, update_time_pri_call_back);
-        }else {
+        } else {
             add_timer(client, add_timer_call_back);
         }
 
@@ -114,7 +135,7 @@ void ev_read_callback(void *watcher) {
     }
     struct Buffer *read_buff = new_buffer(MAX_LINE, MAX_REQUEST_SIZE);
     //用来处理httpclient 已经被释放了，但是还是相应了事件
-    if (client->ssl==NULL){
+    if (client->ssl == NULL) {
         return;
     }
     int res = ssl_read_buffer(client->ssl, read_buff);
@@ -155,7 +176,7 @@ void ev_write_callback(void *watcher) {
     }
     struct Buffer *read_buff = create_http_response_buffer(client->response);
     //用来处理httpclient 已经被释放了，但是还是相应了事件
-    if (client->ssl==NULL){
+    if (client->ssl == NULL) {
         return;
     }
     res = ssl_write_buffer(client->ssl, read_buff);
@@ -201,15 +222,30 @@ struct http_client *new_http_client() {
 
 //不需要释放timer， 因为timer在过期模块中单独释放
 void free_http_client(struct http_client *client) {
-    if (client->client_ip != NULL) { free(client->client_ip); client->client_ip=NULL;}
-    if (client->ssl != NULL) { SSL_free(client->ssl);client->ssl=NULL;}
-    if (client->request != NULL) { delete_http_request(client->request);client->request=NULL; }
-    if (client->response != NULL) { delete_http_response(client->response); client->response=NULL;}
-    if (client->request_data != NULL) { free_buffer(client->request_data); client->request_data=NULL;}
-    client->timer=NULL;
-    epoll_ctl(client->e_pool_fd,EPOLL_CTL_DEL,client->event_fd,NULL);
+    if (client->client_ip != NULL) {
+        free(client->client_ip);
+        client->client_ip = NULL;
+    }
+    if (client->ssl != NULL) {
+        SSL_free(client->ssl);
+        client->ssl = NULL;
+    }
+    if (client->request != NULL) {
+        delete_http_request(client->request);
+        client->request = NULL;
+    }
+    if (client->response != NULL) {
+        delete_http_response(client->response);
+        client->response = NULL;
+    }
+    if (client->request_data != NULL) {
+        free_buffer(client->request_data);
+        client->request_data = NULL;
+    }
+    client->timer = NULL;
+    epoll_ctl(client->e_pool_fd, EPOLL_CTL_DEL, client->event_fd, NULL);
     close(client->event_fd);
-    client->event_fd=-1;
+    client->event_fd = -1;
     free(client);
 }
 

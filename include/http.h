@@ -15,7 +15,10 @@
 #define MAX_RESPONSE_SIZE 2*1024*1024
 //每次读取数据最大 8K
 #define MAX_LINE 4096
-
+typedef struct mime_type_s {
+    const char *type;
+    const char *value;
+} mime_type_t;
 
 // 保存HTTP报文头部的字段的链表
 struct http_header {
