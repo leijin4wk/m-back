@@ -8,7 +8,8 @@
 #include "ssl_tool.h"
 #include "http_buffer.h"
 #include "str_tool.h"
-static const char* get_file_type(const char *type);
+static int parser_mine_type(struct http_request *request);
+static const char* get_file_type(char *type);
 static struct http_header *new_http_header();
 static void delete_http_header(struct http_header *header);
 static void delete_http_param(struct http_param *param);
@@ -56,7 +57,7 @@ mime_type_t mime_type[] =
                 {NULL, "text/plain"}
         };
 //获取媒体类型
-static const char* get_file_type(const char *type){
+static const char* get_file_type(char *type){
     if (type == NULL) {
         return "text/plain";
     }
@@ -73,14 +74,11 @@ struct http_request *new_http_request() {
     struct http_request *request = malloc(sizeof(struct http_request));
     request->headers = NULL;
     request->url = NULL;
-    request->mime_type=NULL;
+    request->path_suffix=NULL;
     request->method=-1;
     request->body = NULL;
     request->query_str= NULL;
     request->query_param=NULL;
-    request->flags = 0;
-    request->http_major = 0;
-    request->http_minor = 0;
     return request;
 }
 // 删除一个HTTP请求
@@ -88,7 +86,7 @@ void delete_http_request(struct http_request *request) {
     if (request->url != NULL) free(request->url);
     if (request->body != NULL) free(request->body);
     if (request->query_str!=NULL) free(request->query_str);
-    if (request->mime_type!=NULL) free(request->mime_type);
+    if (request->path_suffix!=NULL) free(request->path_suffix);
     struct http_header *header = request->headers;
     while (header != NULL) {
         struct http_header *to_delete = header;
@@ -203,12 +201,16 @@ static int on_url(http_parser* parser, const char* at, size_t length) {
     request->method = parser->method;
     alloc_cpy(request->url, at, length)
     alloc_cpy(request->path, request->url+http_parser_url->field_data[3].off, http_parser_url->field_data[3].len)
+    parser_mine_type(request);
     alloc_cpy(request->query_str, request->url+http_parser_url->field_data[4].off, http_parser_url->field_data[4].len)
     parser_query_param(request,request->url+http_parser_url->field_data[4].off,http_parser_url->field_data[4].len);
     free(http_parser_url);
     return 0;
 }
-
+static int parser_mine_type(struct http_request *request){
+    char *dot_pos = strrchr(request->path, '.');
+    alloc_cpy(request->path_suffix, dot_pos, strlen(dot_pos))
+}
 static int on_header_request_field(http_parser* parser, const char* at, size_t length) {
     struct http_request *request = (struct http_request *) parser->data;
     struct http_header *header = add_http_request_header(request);
@@ -239,9 +241,7 @@ static int set_param_value(struct http_request *request, const char* at, size_t 
     return 0;
 }
 static int on_headers_complete(http_parser* parser) {
-    struct http_request *request = (struct http_request *) parser->data;
-    request->http_major=parser->http_major;
-    request->http_minor=parser->http_minor;
+
     return 0;
 }
 static int on_body(http_parser* parser, const char* at, size_t length) {

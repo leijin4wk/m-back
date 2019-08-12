@@ -35,14 +35,11 @@ struct http_param{
 struct http_request {
     char *url;
     int method;
-    char *mime_type;
     char *path;
+    char *path_suffix;
     char *query_str;
     struct http_param *query_param;
     char *body;
-    //Transfer-Encoding等判断
-    unsigned int flags;
-    unsigned short http_major, http_minor;
     struct http_header *headers;
 };
 
