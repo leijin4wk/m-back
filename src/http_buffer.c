@@ -8,7 +8,7 @@
 #include "ssl_tool.h"
 #include "http_buffer.h"
 #include "str_tool.h"
-
+static const char* get_file_type(const char *type);
 static struct http_header *new_http_header();
 static void delete_http_header(struct http_header *header);
 static void delete_http_param(struct http_param *param);
@@ -32,13 +32,48 @@ http_parser_settings parser_set= {
         .on_headers_complete = on_headers_complete,
         .on_message_complete = on_message_complete
 };
+//媒体类型
+mime_type_t mime_type[] =
+        {
+                {".html", "text/html"},
+                {".xml", "text/xml"},
+                {".xhtml", "application/xhtml+xml"},
+                {".txt", "text/plain"},
+                {".rtf", "application/rtf"},
+                {".pdf", "application/pdf"},
+                {".word", "application/msword"},
+                {".png", "image/png"},
+                {".gif", "image/gif"},
+                {".jpg", "image/jpeg"},
+                {".jpeg", "image/jpeg"},
+                {".au", "audio/basic"},
+                {".mpeg", "video/mpeg"},
+                {".mpg", "video/mpeg"},
+                {".avi", "video/x-msvideo"},
+                {".gz", "application/x-gzip"},
+                {".tar", "application/x-tar"},
+                {".css", "text/css"},
+                {NULL, "text/plain"}
+        };
+//获取媒体类型
+static const char* get_file_type(const char *type){
+    if (type == NULL) {
+        return "text/plain";
+    }
 
-
+    int i;
+    for (i = 0; mime_type[i].type != NULL; ++i) {
+        if (strcmp(type, mime_type[i].type) == 0)
+            return mime_type[i].value;
+    }
+    return mime_type[i].value;
+}
 // 初始化一个新的HTTP请求
 struct http_request *new_http_request() {
     struct http_request *request = malloc(sizeof(struct http_request));
     request->headers = NULL;
     request->url = NULL;
+    request->mime_type=NULL;
     request->method=-1;
     request->body = NULL;
     request->query_str= NULL;
@@ -53,6 +88,7 @@ void delete_http_request(struct http_request *request) {
     if (request->url != NULL) free(request->url);
     if (request->body != NULL) free(request->body);
     if (request->query_str!=NULL) free(request->query_str);
+    if (request->mime_type!=NULL) free(request->mime_type);
     struct http_header *header = request->headers;
     while (header != NULL) {
         struct http_header *to_delete = header;

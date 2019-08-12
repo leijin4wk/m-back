@@ -35,6 +35,7 @@ struct http_param{
 struct http_request {
     char *url;
     int method;
+    char *mime_type;
     char *path;
     char *query_str;
     struct http_param *query_param;

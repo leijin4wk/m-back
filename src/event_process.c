@@ -21,28 +21,6 @@ extern map_void_t dispatcher_map;
 extern char *root;
 extern char *index_page;
 
-mime_type_t mime_type[] =
-        {
-                {".html", "text/html"},
-                {".xml", "text/xml"},
-                {".xhtml", "application/xhtml+xml"},
-                {".txt", "text/plain"},
-                {".rtf", "application/rtf"},
-                {".pdf", "application/pdf"},
-                {".word", "application/msword"},
-                {".png", "image/png"},
-                {".gif", "image/gif"},
-                {".jpg", "image/jpeg"},
-                {".jpeg", "image/jpeg"},
-                {".au", "audio/basic"},
-                {".mpeg", "video/mpeg"},
-                {".mpg", "video/mpeg"},
-                {".avi", "video/x-msvideo"},
-                {".gz", "application/x-gzip"},
-                {".tar", "application/x-tar"},
-                {".css", "text/css"},
-                {NULL, "text/plain"}
-        };
 static void add_timer_call_back(void *client, struct timer_node_t *node);
 
 static struct timer_node_t *update_time_pri_call_back(void *client);
