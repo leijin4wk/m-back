@@ -26,8 +26,6 @@ struct http_client{
     struct http_request *request;
     struct Buffer* request_data;
     struct http_response *response;
-    //记录client的最后一次操作毫秒数
-    size_t    last_update_time;
     void *timer;
 };
 void ev_loop_init();

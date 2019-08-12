@@ -51,13 +51,11 @@ static void process_http(struct http_client *client);
 
 static void add_timer_call_back(void *client, struct timer_node_t *node) {
     struct http_client *http_client = (struct http_client *) client;
-    http_client->last_update_time = current_time_millis;
     http_client->timer = node;
 }
 
 static struct timer_node_t *update_time_pri_call_back(void *client) {
     struct http_client *http_client = (struct http_client *) client;
-    http_client->last_update_time = current_time_millis;
     return (struct timer_node_t *) http_client->timer;
 }
 
