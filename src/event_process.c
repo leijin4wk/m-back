@@ -173,7 +173,6 @@ void ev_write_callback(void *watcher) {
         }
     }
     update_time_pri(client, update_time_pri_call_back);
-    log_info("fd：%d process success!",client->event_fd);
 }
 
 struct http_client *new_http_client() {
