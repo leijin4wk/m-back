@@ -10,6 +10,7 @@
     dest = malloc(len + 1);\
     memcpy(dest, src, len);\
     dest[len] = '\0';
+const char * get_file_type(char*);
 struct http_request* parser_http_request_buffer(struct Buffer *buf);
 struct Buffer *create_http_response_buffer(struct http_response *http_response);
 struct http_request *new_http_request();

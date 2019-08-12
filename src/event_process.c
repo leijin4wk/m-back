@@ -250,6 +250,9 @@ static void process_http(struct http_client *client) {
                 client->response->data_type = STATIC_DATA;
                 client->response->real_file_path = buffer_to_string(filename);
                 client->response->real_file_size = sbuf.st_size;
+                struct http_header *header = add_http_response_header(client->response);
+                header->name=strdup("Content-Type");
+                header->value=strdup(get_file_type(client->request->path_suffix));
             } else if (S_ISDIR(sbuf.st_mode) && strcmp("/", client->request->path) == 0) {
                 buffer_add(filename, index_page, strlen(index_page));
                 flag = stat(buffer_to_string(filename), &sbuf);
@@ -260,6 +263,9 @@ static void process_http(struct http_client *client) {
                     client->response->data_type = STATIC_DATA;
                     client->response->real_file_size = sbuf.st_size;
                     client->response->real_file_path = buffer_to_string(filename);
+                    struct http_header *header = add_http_response_header(client->response);
+                    header->name=strdup("Content-Type");
+                    header->value=strdup("text/html;charset=utf-8");
                 }
             } else {
                 client->response->data_type = DYNAMIC_DATA;

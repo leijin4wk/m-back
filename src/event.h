@@ -27,7 +27,7 @@ struct http_client{
     struct Buffer* request_data;
     struct http_response *response;
     void *timer;
-    void (*handler)(struct http_request* request,struct http_response* response)
+    void (*handler)(struct http_request* request,struct http_response* response);
 };
 void ev_loop_init();
 void ev_accept_start(int server_fd);
