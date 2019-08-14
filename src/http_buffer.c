@@ -71,20 +71,6 @@ mime_type_t media_type[] =
                 {".css",   "text/css"},
                 {NULL,     "text/plain;charset=utf-8"}
         };
-
-//获取媒体类型
-//static const char* get_file_type(char *type){
-//    if (type == NULL) {
-//        return "text/plain";
-//    }
-//
-//    int i;
-//    for (i = 0; media_type[i].type != NULL; ++i) {
-//        if (strcmp(type, media_type[i].type) == 0)
-//            return media_type[i].value;
-//    }
-//    return media_type[i].value;
-//}
 // 初始化一个新的HTTP请求
 struct http_request *new_http_request() {
     struct http_request *request = malloc(sizeof(struct http_request));
@@ -95,6 +81,7 @@ struct http_request *new_http_request() {
     request->body = NULL;
     request->query_str = NULL;
     request->query_param = NULL;
+    request->db_con_pool=NULL;
     return request;
 }
 
