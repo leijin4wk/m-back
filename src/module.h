@@ -14,8 +14,6 @@ struct module{
 struct http_module_api{
     char* path;
     char* request_method;
-    char* consumes;
-    char* produces;
     void (*function)(struct http_request* request,struct http_response* response);
 
 };

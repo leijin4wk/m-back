@@ -60,8 +60,6 @@ static void load_api_by_json(char* module_name,char* module_path,cJSON* api_arr,
         char * path=cJSON_GetObjectItem(arr_item,"path")->valuestring;
         api->path=path;
         api->request_method=cJSON_GetObjectItem(arr_item,"request_method")->valuestring;
-        api->consumes=cJSON_GetObjectItem(arr_item,"consumes")->valuestring;
-        api->produces=cJSON_GetObjectItem(arr_item,"produces")->valuestring;
         api->function=dlsym(handle,cJSON_GetObjectItem(arr_item,"function")->valuestring);
         int res=map_set(&dispatcher_map,path,api);
         if (res<0){

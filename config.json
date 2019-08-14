@@ -13,8 +13,6 @@
         {
           "path": "/home",
           "request_method": "GET",
-          "consumes":"",
-          "produces":"",
           "function": "home_index"
         }
       ]
