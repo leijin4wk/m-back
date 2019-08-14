@@ -27,7 +27,6 @@ static int handle_expire_timers_call_back(struct timer_node_t *node) {
     struct http_client *http_client = (struct http_client *) node->value;
     long a=current_time_millis - node->pri;
     if (a > TIMEOUT_DEFAULT) {
-        log_info("删除SSL连接:%d ,ip:%s , 当前连接人数%d", http_client->event_fd, http_client->client_ip, --total_clients);
         p_queue_pop(time_pq);
         node->value=NULL;
         free(node);
