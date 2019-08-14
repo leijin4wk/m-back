@@ -14,9 +14,7 @@
 apt-get install libssl-dev
 
 
-
-## 时间：2019.8.9  01:30:00
-
+apt-get install libzdb-dev
 
 时至今日基本完成以下:
 
@@ -39,13 +37,10 @@ apt-get install libssl-dev
 接下来要完成的内容：
 
 
-1.模仿apue中的数据库函数把apue中数据库部分的hash表的代码换成b+树(apue就是《unix环境高级编程》，这本书每次读的时候都会有新的收获，推荐！)
+1.完成session功能。
 
 
-2.完成session功能。
-
-
-3.检查是否有内存泄漏的问题。
+2.检查是否有内存泄漏的问题。
 
 
                                         

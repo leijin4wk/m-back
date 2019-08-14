@@ -25,18 +25,20 @@ MESSAGE(STATUS "${CMAKE_C_FLAGS}")
 
 ##包含自己的头文件
 include_directories(./include)
+##包含zdb头文件
+include_directories(/usr/include/zdb)
 # 查找目录下的所有源文件，并将名称保存到 DIR_SRCS 变量
 aux_source_directory(src/ DIR_SRCS)
-##添加apue中简单的数据库
-add_subdirectory(db)
 ##home 动态库
 add_subdirectory(web/home)
 ##生成可执行代码
-add_executable(m_back ${DIR_SRCS})
+add_executable(m_back ${DIR_SRCS} src/db.h src/db.c)
 #pthread  posix的线程库
 target_link_libraries(m_back pthread)
 #https  stl openssl依赖库
 target_link_libraries(m_back ssl crypto)
+#zdb  数据库连接池库
+target_link_libraries(m_back zdb)
 #dl
 target_link_libraries(m_back dl)
 

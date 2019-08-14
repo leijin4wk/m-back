@@ -5,6 +5,7 @@
 #ifndef M_BACK_HTTP_H
 #define M_BACK_HTTP_H
 #include <openssl/ssl.h>
+#
 //动态数据
 #define DYNAMIC_DATA 0
 //静态数据
@@ -41,6 +42,7 @@ struct http_request {
     struct http_param *query_param;
     char *body;
     struct http_header *headers;
+    void * db_con_pool;
 };
 
 struct http_response {

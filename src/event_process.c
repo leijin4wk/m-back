@@ -14,7 +14,7 @@
 #include "module.h"
 #include "http_buffer.h"
 #include "str_tool.h"
-
+#include "db.h"
 extern map_void_t dispatcher_map;
 extern char *root;
 extern char *index_page;
@@ -271,6 +271,7 @@ static void process_http(struct http_client *client) {
         }
     } else {
         client->response->data_type = DYNAMIC_DATA;
+        client->request->db_con_pool=db_connect_pool;
         struct http_module_api *api = (struct http_module_api *) (*fun);
         function = api->function;
         function(client->request, client->response);
