@@ -52,7 +52,21 @@ static void load_api_by_json(char* module_name,char* module_path,cJSON* api_arr,
         char * path=cJSON_GetObjectItem(arr_item,"path")->valuestring;
         api->path=path;
         api->module_handle=handle;
-        api->request_method=cJSON_GetObjectItem(arr_item,"request_method")->valuestring;
+        char* method=cJSON_GetObjectItem(arr_item,"request_method")->valuestring;
+        if(strcmp(method,"DELETE")==0){
+            api->request_method=0;
+        }else if(strcmp(method,"GET")==0){
+            api->request_method=1;
+        }else if(strcmp(method,"HEAD")==0){
+            api->request_method=2;
+        }else if(strcmp(method,"POST")==0){
+            api->request_method=3;
+        }else if(strcmp(method,"PUT")==0){
+            api->request_method=4;
+        }else{
+            log_err("%s  %s method error!",module_name,method);
+            exit( EXIT_FAILURE );
+        }
         api->function=dlsym(handle,cJSON_GetObjectItem(arr_item,"function")->valuestring);
         int res=map_set(&dispatcher_map,path,api);
         if (res<0){

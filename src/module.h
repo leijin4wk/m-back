@@ -10,7 +10,7 @@
 struct http_module_api{
     char* path;
     void* module_handle;
-    char* request_method;
+    int request_method;
     void (*function)(struct http_request* request,struct http_response* response);
 
 };
