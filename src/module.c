@@ -9,12 +9,17 @@
 #include "module.h"
 
 extern cJSON *json_config;
+
+//XX(0,  DELETE,      DELETE)       \
+//  XX(1,  GET,         GET)          \
+//  XX(2,  HEAD,        HEAD)         \
+//  XX(3,  POST,        POST)         \
+//  XX(4,  PUT,         PUT)
 map_void_t dispatcher_map;
-map_void_t module_map;
+
 static void load_api_by_json(char* module_name,char* module_path,cJSON* api_arr, int arr_size);
 void load_and_init_module(){
     map_init(&dispatcher_map);
-    map_init(&module_map);
     cJSON *module_array=cJSON_GetObjectItem(json_config,"module");
     int arr_size = cJSON_GetArraySize(module_array);
     cJSON* arr_item = module_array->child;//子对象
@@ -31,25 +36,12 @@ void load_and_init_module(){
     }
 }
 static void load_api_by_json(char* module_name,char* module_path,cJSON* api_arr, int arr_size){
-    struct module* module=malloc(sizeof(struct module));
-    if(module==NULL){
-        log_err("%s module malloc fail!",module_name);
-        exit(EXIT_FAILURE);
-    }
-    module->module_name=module_name;
     void* handle = dlopen( module_path, RTLD_LAZY );
     if( !handle )
     {
         log_err("%s dlopen get error!",module_path);
         exit( EXIT_FAILURE );
     }
-    module->module_handle=handle;
-    int res=map_set(&module_map,module_name,module);
-    if (res<0){
-        log_err("%s add to map error!",module_name);
-        exit( EXIT_FAILURE );
-    }
-
     cJSON* arr_item = api_arr->child;
     for(int i = 0;i <=arr_size-1;i++){
         struct http_module_api* api=malloc(sizeof(struct http_module_api));
@@ -59,6 +51,7 @@ static void load_api_by_json(char* module_name,char* module_path,cJSON* api_arr,
         }
         char * path=cJSON_GetObjectItem(arr_item,"path")->valuestring;
         api->path=path;
+        api->module_handle=handle;
         api->request_method=cJSON_GetObjectItem(arr_item,"request_method")->valuestring;
         api->function=dlsym(handle,cJSON_GetObjectItem(arr_item,"function")->valuestring);
         int res=map_set(&dispatcher_map,path,api);
