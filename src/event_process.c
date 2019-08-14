@@ -112,6 +112,8 @@ void ev_read_callback(void *watcher) {
         return;
     }
     client->request_data = read_buff;
+    //创建并初始化response
+    client-> response = new_http_response();
     client->request = parser_http_request_buffer(client->request_data);
     //这个是关键方法
     process_http(client);
@@ -223,7 +225,6 @@ static void process_http(struct http_client *client) {
     void (*function)(struct http_request *, struct http_response *);
     int flag = 0;
     buffer_add(filename, root, strlen(root));
-    client->response = new_http_response();
     if (check_http_request_header_value(client->request, "Upgrade-Insecure-Requests", "1")) {
         struct http_header *header = add_http_response_header(client->response);
         header->name = strdup("Content-Security-Policy");

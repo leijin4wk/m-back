@@ -8,6 +8,9 @@
 #include "ssl_tool.h"
 #include "http_buffer.h"
 #include "str_tool.h"
+#include "map.h"
+
+extern map_void_t dispatcher_map;
 
 static void parser_file_type(struct http_request *request);
 
