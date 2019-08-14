@@ -19,6 +19,6 @@ void init_connection_pool() {
     }
     char* url=db_url_item->valuestring;
     URL_T dbUrl = URL_new(url);
-    pool = ConnectionPool_new(dbUrl);
-    ConnectionPool_start(pool);
+    db_connect_pool = ConnectionPool_new(dbUrl);
+    ConnectionPool_start(db_connect_pool);
 }
